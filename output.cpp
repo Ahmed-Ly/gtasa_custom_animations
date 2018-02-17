@@ -11,38 +11,38 @@ const char * outputFileName = "C:\\Users\\danish\\Desktop\\GTASADLL_msgs.txt";
 
 std::ofstream getOutputLogStream()
 {
-	std::ofstream ofs;
+    std::ofstream ofs;
 
-	ofs.open ( outputFileName, std::ofstream::out | std::ofstream::app);
+    ofs.open ( outputFileName, std::ofstream::out | std::ofstream::app);
 
-	return ofs;
+    return ofs;
 }
 
 std::wofstream getOutputLogStreamW()
 {
-	std::wofstream ofsW;
+    std::wofstream ofsW;
 
-	ofsW.open  (outputFileName, std::wofstream::out | std::wofstream::app);
+    ofsW.open  (outputFileName, std::wofstream::out | std::wofstream::app);
 
-	return ofsW;
+    return ofsW;
 }
 
 
 void closeOutputStreams()
 {
-	ofsW << "---------------------OUTPUT STREAMS CLOSING---------------------------------------  " << std::endl;
+    ofsW << "---------------------OUTPUT STREAMS CLOSING---------------------------------------  " << std::endl;
 
-	ofs.close();
-	ofsW.close();
+    ofs.close();
+    ofsW.close();
 }
 
 void PrepareOutputStreams()
 {
 
-	ofs = getOutputLogStream();
-	ofsW = getOutputLogStreamW();
+    ofs = getOutputLogStream();
+    ofsW = getOutputLogStreamW();
 
-	ofsW << "Testing testing.....  " << std::endl;
+    ofsW << "Testing testing.....  " << std::endl;
 
 
 }

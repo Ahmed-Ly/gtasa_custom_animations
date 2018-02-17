@@ -53,11 +53,11 @@ char * __cdecl NEW_AddAnimAssocDefinition
     int            Descriptor
 )
 {
-	/*
+    /*
     ofs << "NEW_AddAnimAssocDefinition: called, arguements: " << std::endl 
         << "BlockName = "<< BlockName << ", " <<  "AnimName = " << AnimName << ", "
         << "AnimationGroup = " << AnimationGroup << ", " << "AnimationID = " << AnimationID << std::endl << std::endl;
-		*/
+        */
   // MessageBox(0, "NEW_AddAnimAssocDefinition: called!!!\n", "Hi", MB_ICONINFORMATION);
 
     return OLD_AddAnimAssocDefinition (BlockName, AnimName, AnimationGroup, AnimationID, Descriptor);
@@ -80,210 +80,210 @@ int __cdecl NEW_RegisterAnimBlock
 
 void WINAPI NEW_CreateAssociations_Clump
 (
-	char const* szIfpFile,
-	void * pClump,
-	char** pszAnimations,
-	int NumAnimations
+    char const* szIfpFile,
+    void * pClump,
+    char** pszAnimations,
+    int NumAnimations
 )
 {
-	void * pThis;
-	__asm mov pThis, ecx;
+    void * pThis;
+    __asm mov pThis, ecx;
 
 
-	__asm mov ecx, pThis;
-	OLD_CreateAssociations_Clump(szIfpFile, pClump, pszAnimations, NumAnimations);
+    __asm mov ecx, pThis;
+    OLD_CreateAssociations_Clump(szIfpFile, pClump, pszAnimations, NumAnimations);
 
-	ofs << "NEW_CreateAssociations_Clump: Called" << "   |  szIfpFile:  " << szIfpFile << std::endl;
-	
+    ofs << "NEW_CreateAssociations_Clump: Called" << "   |  szIfpFile:  " << szIfpFile << std::endl;
+    
 }
 
 void WINAPI NEW_CreateAssociations
 (
-	char const* szIfpFile,
-	char const* arg2,
-	char const* arg3,
-	int arg4
+    char const* szIfpFile,
+    char const* arg2,
+    char const* arg3,
+    int arg4
 )
 {
-	void * pThis;
-	__asm mov pThis, ecx;
+    void * pThis;
+    __asm mov pThis, ecx;
 
 
-	ofs << "NEW_CreateAssociations: " << std::endl
-		<< "szIfpFile: " << szIfpFile << std::endl
-		<< "arg2: " << arg2 << std::endl << "arg3: " << arg3 << std::endl
-		<< "arg4: " << arg4  << std::endl << std::endl;
-	
-	__asm mov ecx, pThis;
-	return OLD_CreateAssociations ( szIfpFile, arg2, arg3, arg4 );
+    ofs << "NEW_CreateAssociations: " << std::endl
+        << "szIfpFile: " << szIfpFile << std::endl
+        << "arg2: " << arg2 << std::endl << "arg3: " << arg3 << std::endl
+        << "arg4: " << arg4  << std::endl << std::endl;
+    
+    __asm mov ecx, pThis;
+    return OLD_CreateAssociations ( szIfpFile, arg2, arg3, arg4 );
 }
 
 
 CAnimBlendAssociation * NEW_CreateAnimAssociation
 (
-	DWORD animGroup,
-	DWORD animID
+    DWORD animGroup,
+    DWORD animID
 )
 {
-	ofs << "NEW_CreateAnimAssociation: " << std::endl;
+    ofs << "NEW_CreateAnimAssociation: " << std::endl;
 
 
-	ofs << "animGroup: "
-		<< animGroup << std::endl << "animID: " << animID << std::endl;
+    ofs << "animGroup: "
+        << animGroup << std::endl << "animID: " << animID << std::endl;
 
-	CAnimBlendAssociation * pAnimAssoc = OLD_CreateAnimAssociation(animGroup, animID);
+    CAnimBlendAssociation * pAnimAssoc = OLD_CreateAnimAssociation(animGroup, animID);
 
-	ofs << std::endl;
+    ofs << std::endl;
 
 
-	return pAnimAssoc;
+    return pAnimAssoc;
 }
 
 
 CAnimBlendAssociation * NEW_AddAnimation
 (
-	void * pClump,
-	DWORD animGroup,
-	DWORD animID
+    void * pClump,
+    DWORD animGroup,
+    DWORD animID
 )
 {
 
-	ofs << "NEW_AddAnimation: " << std::endl;
+    ofs << "NEW_AddAnimation: " << std::endl;
 
 
-	ofs << "animGroup: "<< animGroup << std::endl 
-		<< "animID: " << animID << std::endl 
-		<<"GroupName: " << OLD_GetAnimGroupName(animGroup) << std::endl;
+    ofs << "animGroup: "<< animGroup << std::endl 
+        << "animID: " << animID << std::endl 
+        <<"GroupName: " << OLD_GetAnimGroupName(animGroup) << std::endl;
 
-	ofs << "BlockName: " << OLD_GetAnimBlockName(animGroup) << std::endl;
-	
+    ofs << "BlockName: " << OLD_GetAnimBlockName(animGroup) << std::endl;
+    
 
-	CAnimBlendAssociation * pAnimAssoc;
-	CAnimBlendHierarchy * pGatewayAnimHierarchy = GetAnimHierachyBy_GroupId_AnimId (animGroup, animID);
+    CAnimBlendAssociation * pAnimAssoc;
+    CAnimBlendHierarchy * pGatewayAnimHierarchy = GetAnimHierachyBy_GroupId_AnimId (animGroup, animID);
 
 
-	if (pGatewayAnimHierarchy != nullptr)
-	{
-		// Change the hierarchy
-		if ( 
-				(OLD_GetUppercaseKey("run_stopR") == pGatewayAnimHierarchy->m_hashKey)
-				||
-				(OLD_GetUppercaseKey("run_stop") == pGatewayAnimHierarchy->m_hashKey)
-				||
-				(OLD_GetUppercaseKey("muscleidle_csaw") ==pGatewayAnimHierarchy->m_hashKey)
-				||
-				(OLD_GetUppercaseKey("SEAT_down") == pGatewayAnimHierarchy->m_hashKey)
-			)
-		{
-			ofs << "run_stop anim!! " << std::endl;
+    if (pGatewayAnimHierarchy != nullptr)
+    {
+        // Change the hierarchy
+        if ( 
+                (OLD_GetUppercaseKey("run_stopR") == pGatewayAnimHierarchy->m_hashKey)
+                ||
+                (OLD_GetUppercaseKey("run_stop") == pGatewayAnimHierarchy->m_hashKey)
+                ||
+                (OLD_GetUppercaseKey("muscleidle_csaw") ==pGatewayAnimHierarchy->m_hashKey)
+                ||
+                (OLD_GetUppercaseKey("SEAT_down") == pGatewayAnimHierarchy->m_hashKey)
+            )
+        {
+            ofs << "run_stop anim!! " << std::endl;
 
-			if (g_StaticAssocsSet ) //&& !g_HashKeyModified)
-			{
-				//g_HashKeyModified = true;
+            if (g_StaticAssocsSet ) //&& !g_HashKeyModified)
+            {
+                //g_HashKeyModified = true;
 
-				CAnimBlendStaticAssociation * pAnimStaticAssocToModify = GetAnimStaticAssocBy_GroupId_AnimId(animGroup, animID);
+                CAnimBlendStaticAssociation * pAnimStaticAssocToModify = GetAnimStaticAssocBy_GroupId_AnimId(animGroup, animID);
 
-				ofs << "Calling ModifyAnimStaticAssocation now" << std::endl;
+                ofs << "Calling ModifyAnimStaticAssocation now" << std::endl;
 
-				ModifyAnimStaticAssocation(pClump, pAnimStaticAssocToModify);
-			}
+                ModifyAnimStaticAssocation(pClump, pAnimStaticAssocToModify);
+            }
 
-			pAnimAssoc = OLD_AddAnimation(pClump, animGroup, animID);
-		}
-		else
-		{
-			pAnimAssoc = OLD_AddAnimation(pClump, animGroup, animID);
-		}
-	}
-	else
-	{
-		ofs << "ERROR: pGatewayAnimHierarchy is nullptr. Calling OLD_AddAnimation instead of OLD_AddAnimation_hier" << std::endl;
+            pAnimAssoc = OLD_AddAnimation(pClump, animGroup, animID);
+        }
+        else
+        {
+            pAnimAssoc = OLD_AddAnimation(pClump, animGroup, animID);
+        }
+    }
+    else
+    {
+        ofs << "ERROR: pGatewayAnimHierarchy is nullptr. Calling OLD_AddAnimation instead of OLD_AddAnimation_hier" << std::endl;
 
-		pAnimAssoc = OLD_AddAnimation(pClump, animGroup, animID);
-	}
-	
+        pAnimAssoc = OLD_AddAnimation(pClump, animGroup, animID);
+    }
+    
 
-	const char * AnimationName = GetNameFromHash(pAnimAssoc->m_pAnimBlendHierarchy->m_hashKey);
-	if (AnimationName != nullptr)
-	{
-		ofs << std::endl << "AnimationName: " << AnimationName << std::endl;
-	}
-	else
-	{
-		ofs << "GetNameFromHash: could not get animation name" << std::endl;
-		ofs << "HashKey ( Not Found ) : " << pAnimAssoc->m_pAnimBlendHierarchy->m_hashKey << std::endl;
-	}
+    const char * AnimationName = GetNameFromHash(pAnimAssoc->m_pAnimBlendHierarchy->m_hashKey);
+    if (AnimationName != nullptr)
+    {
+        ofs << std::endl << "AnimationName: " << AnimationName << std::endl;
+    }
+    else
+    {
+        ofs << "GetNameFromHash: could not get animation name" << std::endl;
+        ofs << "HashKey ( Not Found ) : " << pAnimAssoc->m_pAnimBlendHierarchy->m_hashKey << std::endl;
+    }
 
-	ofs << std::endl;
+    ofs << std::endl;
 
-	return  pAnimAssoc;
+    return  pAnimAssoc;
 }
 
 
 int __cdecl NEW_LoadAnimFile_stream
 (
-	int pStream,
-	bool b1,
-	const char * sz1
+    int pStream,
+    bool b1,
+    const char * sz1
 )
 {
-	int result;
+    int result;
 
-	
-	ofs << "NEW_LoadAnimFile_stream: called" << std::endl;
+    
+    ofs << "NEW_LoadAnimFile_stream: called" << std::endl;
 
 
-	
-	result = OLD_LoadAnimFile_stream(pStream, b1, sz1);
+    
+    result = OLD_LoadAnimFile_stream(pStream, b1, sz1);
 
 /*
-	static bool isRunStopAnimReplaced = false;
+    static bool isRunStopAnimReplaced = false;
 
-	if (!isRunStopAnimReplaced && isAnimationHierarchyLoaded("run_stopR"))
-	{
-	
-		ofs << "Yes, animation is loaded." << std::endl;
+    if (!isRunStopAnimReplaced && isAnimationHierarchyLoaded("run_stopR"))
+    {
+    
+        ofs << "Yes, animation is loaded." << std::endl;
 
-		CAnimBlock * pPedAnimBlock = OLD_GetAnimationBlock("ped");
+        CAnimBlock * pPedAnimBlock = OLD_GetAnimationBlock("ped");
 
-		ofs << "pPedAnimBlock->m_name: " << pPedAnimBlock->m_name << std::endl;
-
-
-
-		//CAnimBlock * pMuscularAnimBlock = OLD_GetAnimationBlock("muscular");
-		//CAnimBlendHierarchy * pAnimRunStopHierarchy = OLD_GetAnimation("muscleidle_csaw", pMuscularAnimBlock);
-
-		const char * AnimationToReplaceWithName = "run_wuzi";
-		CAnimBlendHierarchy * pAnimSeatDownHierarchy = OLD_GetAnimation(AnimationToReplaceWithName, pPedAnimBlock);
-		
-		const char * AnimationName = GetNameFromHash(pAnimSeatDownHierarchy->m_hashKey);
-		if (AnimationName != nullptr)
-		{
-			ofs << "AnimationName: " << AnimationName << std::endl;
-		}
-		else
-		{
-			ofs << "GetNameFromHash: could not get animation name" << std::endl;
-		}
+        ofs << "pPedAnimBlock->m_name: " << pPedAnimBlock->m_name << std::endl;
 
 
-		CAnimBlendHierarchy * pAnimRunStopHierarchy = OLD_GetAnimation("run_stopR", pPedAnimBlock);
 
-		pAnimRunStopHierarchy->m_pSequences			 = pAnimSeatDownHierarchy->m_pSequences;
-		pAnimRunStopHierarchy->m_nSeqCount			 = pAnimSeatDownHierarchy->m_nSeqCount;
-		pAnimRunStopHierarchy->m_bRunningCompressed  = pAnimSeatDownHierarchy->m_bRunningCompressed;
-		pAnimRunStopHierarchy->field_B			     = pAnimSeatDownHierarchy->field_B;
-		pAnimRunStopHierarchy->m_fTotalTime			 = pAnimSeatDownHierarchy->m_fTotalTime;
-		//pAnimRunStopHierarchy->field_14				 = pAnimSeatDownHierarchy->field_14;
+        //CAnimBlock * pMuscularAnimBlock = OLD_GetAnimationBlock("muscular");
+        //CAnimBlendHierarchy * pAnimRunStopHierarchy = OLD_GetAnimation("muscleidle_csaw", pMuscularAnimBlock);
+
+        const char * AnimationToReplaceWithName = "run_wuzi";
+        CAnimBlendHierarchy * pAnimSeatDownHierarchy = OLD_GetAnimation(AnimationToReplaceWithName, pPedAnimBlock);
+        
+        const char * AnimationName = GetNameFromHash(pAnimSeatDownHierarchy->m_hashKey);
+        if (AnimationName != nullptr)
+        {
+            ofs << "AnimationName: " << AnimationName << std::endl;
+        }
+        else
+        {
+            ofs << "GetNameFromHash: could not get animation name" << std::endl;
+        }
 
 
-		isRunStopAnimReplaced = true;
-	} 
-	
+        CAnimBlendHierarchy * pAnimRunStopHierarchy = OLD_GetAnimation("run_stopR", pPedAnimBlock);
 
-	ofs << std::endl; 
+        pAnimRunStopHierarchy->m_pSequences          = pAnimSeatDownHierarchy->m_pSequences;
+        pAnimRunStopHierarchy->m_nSeqCount           = pAnimSeatDownHierarchy->m_nSeqCount;
+        pAnimRunStopHierarchy->m_bRunningCompressed  = pAnimSeatDownHierarchy->m_bRunningCompressed;
+        pAnimRunStopHierarchy->field_B               = pAnimSeatDownHierarchy->field_B;
+        pAnimRunStopHierarchy->m_fTotalTime          = pAnimSeatDownHierarchy->m_fTotalTime;
+        //pAnimRunStopHierarchy->field_14                = pAnimSeatDownHierarchy->field_14;
+
+
+        isRunStopAnimReplaced = true;
+    } 
+    
+
+    ofs << std::endl; 
 */
-	return result;
+    return result;
 }
 
 int GetNumAnimations (void)

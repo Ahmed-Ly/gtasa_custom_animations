@@ -10,52 +10,52 @@
 
 struct IFPHeader
 {
-	// 4 + 4 + 24 + 4 = 36 bytes
+    // 4 + 4 + 24 + 4 = 36 bytes
 
-	char      Version[4];
-	int32_t   OffsetEOF;
-	char      InternalFileName[24];
-	int32_t   TotalAnimations;
+    char      Version[4];
+    int32_t   OffsetEOF;
+    char      InternalFileName[24];
+    int32_t   TotalAnimations;
 };
 
 struct IFP : FileLoader
 {
-	IFPHeader Header;
-	std::vector <CAnimBlendHierarchy> AnimationHierarchies;
-	std::vector <CAnimBlendSequence> AnimationSequences;
-	unsigned char * KeyFramesArray;
+    IFPHeader Header;
+    std::vector <CAnimBlendHierarchy> AnimationHierarchies;
+    std::vector <CAnimBlendSequence> AnimationSequences;
+    unsigned char * KeyFramesArray;
 };
 
 struct Animation
 {
-	// 24 + 4 + 4 + 4 = 36 bytes
+    // 24 + 4 + 4 + 4 = 36 bytes
 
-	char      Name[24];
-	int32_t   TotalObjects;
-	int32_t   FrameSize;
-	int32_t   isCompressed; // The value is always 1
+    char      Name[24];
+    int32_t   TotalObjects;
+    int32_t   FrameSize;
+    int32_t   isCompressed; // The value is always 1
 };
 
 
 struct Object
 {
-	// 24 + 4 + 4 + 4 = 36 bytes
+    // 24 + 4 + 4 + 4 = 36 bytes
 
-	char      Name[24];
-	int32_t   FrameType;
-	int32_t   TotalFrames;
-	int32_t   BoneID;
+    char      Name[24];
+    int32_t   FrameType;
+    int32_t   TotalFrames;
+    int32_t   BoneID;
 };
 
 struct IFP2_ChildFrame
 {
-	int16_t x, y, z, w, time;
+    int16_t x, y, z, w, time;
 };
 
 
 typedef void *(__cdecl* hCMemoryMgr_Malloc)
 (
-	size_t TotalBytesToAllocate
+    size_t TotalBytesToAllocate
 );
 
 

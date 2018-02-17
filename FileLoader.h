@@ -10,174 +10,174 @@ class FileLoader
 {
 private:
 
-	const char * FilePath;
-	FILE *       FilePointer;
-	char *       FileDataBuffer;
-	UINT         FileLength = 0;
-	UINT         BytesReadFromBuffer = 0;
+    const char * FilePath;
+    FILE *       FilePointer;
+    char *       FileDataBuffer;
+    UINT         FileLength = 0;
+    UINT         BytesReadFromBuffer = 0;
 
-	void setLoaderFilePath(const char * FileToRead)
-	{
-		FilePath = FileToRead;
-	}
+    void setLoaderFilePath(const char * FileToRead)
+    {
+        FilePath = FileToRead;
+    }
 
-	BOOL getFileHandle(void)
-	{
-		errno_t FileOpen = fopen_s(&FilePointer, FilePath, "rb");
+    BOOL getFileHandle(void)
+    {
+        errno_t FileOpen = fopen_s(&FilePointer, FilePath, "rb");
 
-		if (FileOpen != 0)
-		{
-			std::cout << "Failed to open file";
-			return FALSE;
-		}
+        if (FileOpen != 0)
+        {
+            std::cout << "Failed to open file";
+            return FALSE;
+        }
 
-		return TRUE;
-	}
+        return TRUE;
+    }
 
-	BOOL getFileLength(void)
-	{
-		if (!FilePointer)
-			return FALSE;
+    BOOL getFileLength(void)
+    {
+        if (!FilePointer)
+            return FALSE;
 
-		if (fseek(FilePointer, 0, SEEK_END) != 0)
-		{
-			std::cout << "Failed to set cursor to end of file." << std::endl;
-			return FALSE;
-		}
+        if (fseek(FilePointer, 0, SEEK_END) != 0)
+        {
+            std::cout << "Failed to set cursor to end of file." << std::endl;
+            return FALSE;
+        }
 
-		FileLength = ftell(FilePointer);
-		if (FileLength == -1L)
-		{
-			std::cout << "Failed to get length of file (ftell)" << std::endl;
-			return FALSE;
-		}
+        FileLength = ftell(FilePointer);
+        if (FileLength == -1L)
+        {
+            std::cout << "Failed to get length of file (ftell)" << std::endl;
+            return FALSE;
+        }
 
-		rewind(FilePointer);
+        rewind(FilePointer);
 
-		return TRUE;
-	}
+        return TRUE;
+    }
 
-	void AllocateBufferMemory(void)
-	{
-		if (!FilePointer)
-			return;
+    void AllocateBufferMemory(void)
+    {
+        if (!FilePointer)
+            return;
 
-		FileDataBuffer = new char[FileLength + 1];
-	}
+        FileDataBuffer = new char[FileLength + 1];
+    }
 
-	BOOL loadToMemory(void)
-	{
-		if (!FilePointer)
-			return FALSE;
+    BOOL loadToMemory(void)
+    {
+        if (!FilePointer)
+            return FALSE;
 
-		UINT ReadSize = fread(FileDataBuffer, sizeof(char), FileLength, FilePointer);
+        UINT ReadSize = fread(FileDataBuffer, sizeof(char), FileLength, FilePointer);
 
-		if (ReadSize != FileLength)
-		{
-			std::cout << "loadToMemory Failed. ReadSize != FileLength";
-			return FALSE;
-		}
+        if (ReadSize != FileLength)
+        {
+            std::cout << "loadToMemory Failed. ReadSize != FileLength";
+            return FALSE;
+        }
 
-		return TRUE;
-	}
+        return TRUE;
+    }
 
 
 public:
 
-	~FileLoader(void)
-	{
-		unloadFile ();
-	}
+    ~FileLoader(void)
+    {
+        unloadFile ();
+    }
 
-	FileLoader(void)
-	{
+    FileLoader(void)
+    {
 
-	}
+    }
 
-	BOOL createLoader(const char * FileToRead)
-	{
-		setLoaderFilePath(FileToRead);
+    BOOL createLoader(const char * FileToRead)
+    {
+        setLoaderFilePath(FileToRead);
 
-		if (!getFileHandle() || !getFileLength())
-			return FALSE;
+        if (!getFileHandle() || !getFileLength())
+            return FALSE;
 
-		AllocateBufferMemory();
+        AllocateBufferMemory();
 
-		FileDataBuffer[FileLength] = '\0';
+        FileDataBuffer[FileLength] = '\0';
 
-		return TRUE;
-	}
+        return TRUE;
+    }
 
-	BOOL loadFile(void)
-	{
-		if (!loadToMemory())
-			return FALSE;
+    BOOL loadFile(void)
+    {
+        if (!loadToMemory())
+            return FALSE;
 
-		std::cout << "Length: " << FileLength << std::endl;
-		return TRUE;
-	}
+        std::cout << "Length: " << FileLength << std::endl;
+        return TRUE;
+    }
 
-	// This function does not unload IFP data, to unload IFP call unloadIFP function
-	void unloadFile(void)
-	{
-		if (FileDataBuffer != nullptr)
-		{
-			delete[] FileDataBuffer;
-			fclose(FilePointer);
+    // This function does not unload IFP data, to unload IFP call unloadIFP function
+    void unloadFile(void)
+    {
+        if (FileDataBuffer != nullptr)
+        {
+            delete[] FileDataBuffer;
+            fclose(FilePointer);
 
-			FileDataBuffer = nullptr;
-		} 
-	}
+            FileDataBuffer = nullptr;
+        } 
+    }
 
-	void PrintReadOffset(void)
-	{
-		std::cout << "Bytes read from buffer: " << BytesReadFromBuffer << std::endl;
-	}
+    void PrintReadOffset(void)
+    {
+        std::cout << "Bytes read from buffer: " << BytesReadFromBuffer << std::endl;
+    }
 
 
-	template < class T >
-	void readBuffer ( T * Destination )
-	{
-		const UINT ReadOffset = BytesReadFromBuffer;
-		BytesReadFromBuffer += sizeof ( T );
+    template < class T >
+    void readBuffer ( T * Destination )
+    {
+        const UINT ReadOffset = BytesReadFromBuffer;
+        BytesReadFromBuffer += sizeof ( T );
 
-		*Destination = *reinterpret_cast < T * > (FileDataBuffer + ReadOffset);
+        *Destination = *reinterpret_cast < T * > (FileDataBuffer + ReadOffset);
 
-	}
+    }
 
-	void readBytes(void * Destination, const UINT BytesToRead)
-	{
-		const UINT ReadOffset = BytesReadFromBuffer;
-		BytesReadFromBuffer += BytesToRead;
+    void readBytes(void * Destination, const UINT BytesToRead)
+    {
+        const UINT ReadOffset = BytesReadFromBuffer;
+        BytesReadFromBuffer += BytesToRead;
 
-		memcpy(Destination, FileDataBuffer + ReadOffset, BytesToRead);
-	}
+        memcpy(Destination, FileDataBuffer + ReadOffset, BytesToRead);
+    }
 
-	std::string readString(UINT StringSizeInBytes)
-	{
-		std::string String;
+    std::string readString(UINT StringSizeInBytes)
+    {
+        std::string String;
 
-		String.resize(StringSizeInBytes);
+        String.resize(StringSizeInBytes);
 
-		for (UINT i = 0; i < StringSizeInBytes; i++)
-		{
-			const UINT ReadOffset = BytesReadFromBuffer;
+        for (UINT i = 0; i < StringSizeInBytes; i++)
+        {
+            const UINT ReadOffset = BytesReadFromBuffer;
 
-			String[i] = FileDataBuffer[ReadOffset];
-			BytesReadFromBuffer++;
-		}
-		return String;
-	}
+            String[i] = FileDataBuffer[ReadOffset];
+            BytesReadFromBuffer++;
+        }
+        return String;
+    }
 
-	void readCString (char * Destination, const UINT BytesToRead)
-	{
-		const UINT ReadOffset = BytesReadFromBuffer;
-		BytesReadFromBuffer += BytesToRead;
+    void readCString (char * Destination, const UINT BytesToRead)
+    {
+        const UINT ReadOffset = BytesReadFromBuffer;
+        BytesReadFromBuffer += BytesToRead;
 
-		memcpy(Destination, FileDataBuffer + ReadOffset, BytesToRead);
-		
-		*(Destination + (BytesToRead - 1)) = '\0';
-	}
+        memcpy(Destination, FileDataBuffer + ReadOffset, BytesToRead);
+        
+        *(Destination + (BytesToRead - 1)) = '\0';
+    }
 };
 
 #endif

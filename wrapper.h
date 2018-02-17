@@ -38,119 +38,119 @@ typedef int ( __cdecl* hRegisterAnimBlock )
 
 typedef void(WINAPI* hCreateAssociations_Clump)
 (
-	char const* szIfpFile,
-	void * pClump,
-	char** pszAnimations,
-	int NumAnimations
+    char const* szIfpFile,
+    void * pClump,
+    char** pszAnimations,
+    int NumAnimations
 );
 
 typedef void(WINAPI* hCreateAssociations)
 (
-	char const* szIfpFile,
-	char const* arg2,
-	char const* arg3,
-	int arg4
+    char const* szIfpFile,
+    char const* arg2,
+    char const* arg3,
+    int arg4
 );
 
 
 typedef CAnimBlendAssociation * (__cdecl* hRpAnimBlendClumpGetAssociation)
 (
-	void * pClump,
-	const char * szAnimName
+    void * pClump,
+    const char * szAnimName
 );
 
 typedef CAnimBlendAssociation * (__cdecl* hRpAnimBlendClumpGetAssociationAnimId)
 (
-	//int clump,
-	void * clump,
-	unsigned int animId
+    //int clump,
+    void * clump,
+    unsigned int animId
 );
 
 
 
 typedef CAnimBlendAssociation * (__cdecl* hGetAnimAssociationAnimId)
 (
-	DWORD animGroup,
-	DWORD animID
+    DWORD animGroup,
+    DWORD animID
 );
 
 
 typedef const char * (__cdecl* hGetAnimGroupName)
 ( 
-	DWORD groupID
+    DWORD groupID
 );
 
 
 typedef CAnimBlendAssociation * (__cdecl* hCreateAnimAssociation)
 (
-	DWORD animGroup,
-	DWORD animID
+    DWORD animGroup,
+    DWORD animID
 );
 
 typedef CAnimBlendAssociation * (__cdecl* hAddAnimation)
 (
-	void * pClump,
-	DWORD animGroup,
-	DWORD animID
+    void * pClump,
+    DWORD animGroup,
+    DWORD animID
 );
 
 typedef void (WINAPI* hCAnimBlendStaticAssociation_Init)
 (
-	void* pClump,
-	CAnimBlendHierarchy* pAnimBlendHierarchy
+    void* pClump,
+    CAnimBlendHierarchy* pAnimBlendHierarchy
 );
 
 typedef signed int (__thiscall* hCAnimBlendAssociation_Init_reference)
 (
-	CAnimBlendStaticAssociation& ReferenceStaticAssoc
+    CAnimBlendStaticAssociation& ReferenceStaticAssoc
 );
 
 
 typedef int(__thiscall* hCAnimBlendAssociation_Init)
 (
-	void* pClump, 
-	CAnimBlendHierarchy* pAnimBlendHier
+    void* pClump, 
+    CAnimBlendHierarchy* pAnimBlendHier
 );
 
 typedef unsigned int(__thiscall* hCAnimBlendHierarchy_SetName)
 (
-	void * pThis,
-	char * string
+    void * pThis,
+    char * string
 );
 
 typedef unsigned int(__cdecl* hGetUppercaseKey)
 (
-	char const * str
+    char const * str
 );
 
 typedef int(__cdecl * hLoadAnimFile_stream)
 (
-	int pStream,
-	bool b1,
-	const char * sz1
+    int pStream,
+    bool b1,
+    const char * sz1
 );
 
 typedef const char *(__cdecl * hGetAnimBlockName)
 (
-	DWORD groupID
+    DWORD groupID
 );
 
 typedef CAnimBlock *(__cdecl * hGetAnimationBlock)
 (
-	const char * szName
+    const char * szName
 );
 
 typedef CAnimBlendHierarchy *(__cdecl * hGetAnimation)
 (
-	const char * szName,
-	CAnimBlock * pBlock
+    const char * szName,
+    CAnimBlock * pBlock
 );
 
 typedef CAnimBlendAssociation *(__cdecl * hAddAnimation_hier)
 (
-	void * pClump, 
-	CAnimBlendHierarchy *, 
-	int ID
+    void * pClump, 
+    CAnimBlendHierarchy *, 
+    int ID
 );
 
 
@@ -163,23 +163,23 @@ typedef int(__thiscall * hCAnimBlendHierarchy_Constructor)(void);
 
 typedef unsigned int(__thiscall * hCAnimBlendSequence_SetName)
 (
-	void * pThis,
-	char const* string
+    void * pThis,
+    char const* string
 );
 
 typedef int(__thiscall * hCAnimBlendSequence_SetBoneTag)
 (
-	void * pThis,
-	int hash
+    void * pThis,
+    int hash
 );
 
 typedef void *(__thiscall * hCAnimBlendSequence_SetNumFrames)
 (
-	void * pThis,
-	size_t frameCount,
-	bool isRoot, 
-	bool compressed, 
-	unsigned char* st
+    void * pThis,
+    size_t frameCount,
+    bool isRoot, 
+    bool compressed, 
+    unsigned char* st
 );
 
 
@@ -189,12 +189,12 @@ typedef int(__thiscall *  hCAnimBlendHierarchy_CalcTotalTime) (void);
 
 typedef int(__cdecl *  hCreateAnimAssocGroups)
 (
-	void
+    void
 );
 
 typedef int(__cdecl *  hLoadPedAnimIFPFile)
 (
-	void
+    void
 );
 
 typedef int * (__cdecl *  hRwStreamOpen)
@@ -225,60 +225,60 @@ int __cdecl NEW_RegisterAnimBlock
 
 void WINAPI NEW_CreateAssociations_Clump
 (
-	char const* szIfpFile,
-	void * pClump, 
-	char** pszAnimations,
-	int NumAnimations
+    char const* szIfpFile,
+    void * pClump, 
+    char** pszAnimations,
+    int NumAnimations
 );
 
 void WINAPI NEW_CreateAssociations
 (
-	char const* szIfpFile,
-	char const* arg2, 
-	char const* arg3, 
-	int arg4
+    char const* szIfpFile,
+    char const* arg2, 
+    char const* arg3, 
+    int arg4
 );
 
 CAnimBlendAssociation * NEW_CreateAnimAssociation
 (
-	DWORD animGroup,
-	DWORD animID
+    DWORD animGroup,
+    DWORD animID
 );
 
 CAnimBlendAssociation * NEW_AddAnimation
 (
-	void * pClump,
-	DWORD animGroup,
-	DWORD animID
+    void * pClump,
+    DWORD animGroup,
+    DWORD animID
 );
 
 void WINAPI NEW_CAnimBlendStaticAssociation_Init
 (
-	void* pClump, 
-	CAnimBlendHierarchy* pAnimBlendHierarchy
+    void* pClump, 
+    CAnimBlendHierarchy* pAnimBlendHierarchy
 );
 
 unsigned int WINAPI NEW_CAnimBlendHierarchy_SetName
 (
-	char * string
+    char * string
 );
 
 unsigned int __cdecl NEW_GetUppercaseKey
 (
-	char const * str
+    char const * str
 );
 
 
 int __cdecl NEW_LoadAnimFile_stream
 (
-	int pStream,
-	bool b1, 
-	const char * sz1
+    int pStream,
+    bool b1, 
+    const char * sz1
 );
 
 int NEW_LoadPedAnimIFPFile
 (
-	void
+    void
 );
 
 const char * GetNameFromHash(DWORD Hash);

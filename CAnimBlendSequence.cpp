@@ -5,12 +5,12 @@ hCAnimBlendSequence_Deconstructor OLD_CAnimBlendSequence_Deconstructor = (hCAnim
 
 void CAnimBlendSequence_Constructor (CAnimBlendSequence * pSequence)
 {
-	WORD * pThis = (WORD *)pSequence;
+    WORD * pThis = (WORD *)pSequence;
 
-	pThis[2] = 0;
-	pThis[3] = 0;
-	*((DWORD *)pThis + 2) = 0;
-	*pThis = -1;
+    pThis[2] = 0;
+    pThis[3] = 0;
+    *((DWORD *)pThis + 2) = 0;
+    *pThis = -1;
 }
 
 /*
@@ -20,6 +20,6 @@ void CAnimBlendSequence_Constructor (CAnimBlendSequence * pSequence)
 
 CAnimBlendSequence::~CAnimBlendSequence()
 {
-	OLD_CAnimBlendSequence_Deconstructor();
+    OLD_CAnimBlendSequence_Deconstructor();
 }
 */
