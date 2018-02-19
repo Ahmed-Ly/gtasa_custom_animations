@@ -52,6 +52,41 @@ struct IFP2_ChildFrame
     int16_t x, y, z, w, time;
 };
 
+enum BoneType 
+{
+    NORMAL      = 0, // Normal or Root, both are same
+    PELVIS      = 1,
+    SPINE       = 2,
+    SPINE1      = 3,
+    NECK        = 4,
+    HEAD        = 5,
+    JAW         = 8,
+    L_BROW      = 6,
+    R_BROW      = 7,
+    L_CLAVICLE  = 31,
+    L_UPPER_ARM = 32,
+    L_FORE_ARM  = 33,
+    L_HAND      = 34,
+    L_FINGER    = 35,
+    L_FINGER_01 = 36,
+    R_CLAVICLE  = 21,
+    R_UPPER_ARM = 22,
+    R_FORE_ARM  = 23,
+    R_HAND      = 24,
+    R_FINGER    = 25,
+    R_FINGER_01 = 26,
+    L_BREAST    = 302,
+    R_BREAST    = 301,
+    BELLY       = 201,
+    L_THIGH     = 41,
+    L_CALF      = 42,
+    L_FOOT      = 43,
+    L_TOE_0     = 44,
+    R_THIGH     = 51,
+    R_CALF      = 52,
+    R_FOOT      = 53,
+    R_TOE_0     = 54    
+};
 
 typedef void *(__cdecl* hCMemoryMgr_Malloc)
 (
