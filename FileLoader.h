@@ -178,6 +178,11 @@ public:
         
         *(Destination + (BytesToRead - 1)) = '\0';
     }
+
+    void skipBytes(UINT TotalBytesToSkip)
+    {
+        BytesReadFromBuffer += TotalBytesToSkip;
+    }
 };
 
 #endif
