@@ -95,18 +95,11 @@ void ModifyAnimStaticAssocation ( void * pClump, CAnimBlendStaticAssociation * p
     CAnimBlendHierarchy* pAnimBlendHierarchy2 = pAnimStaticAssoc2->m_pAnimBlendHier;
 
     
-    //unsigned int m_hashKey1 = pAnimBlendHierarchy1->m_hashKey;
-
-    //pAnimBlendHierarchy1->m_hashKey = 1000; // pAnimBlendHierarchy2->m_hashKey;
-
-    //pAnimBlendHierarchy2->m_hashKey = m_hashKey1;
-
-
     // 241: run_wuzi from custom IFP
     // 242: SEAT_down from custom IFP
     // 127: facanger
 
-    CAnimBlendHierarchy* pCustomAnimBlendHierarchy = &g_IFPs[0].AnimationHierarchies[218];
+    CAnimBlendHierarchy* pCustomAnimBlendHierarchy = &g_IFPs[0].AnimationHierarchies[242];
 
     const char * AnimationName = GetNameFromHash(pCustomAnimBlendHierarchy->m_hashKey);
     if (AnimationName != nullptr)
