@@ -11,9 +11,6 @@ extern DWORD g_CurrentHierarchyAnimationHash;
 extern char * AnimationToReplaceWithName;
 extern std::map<DWORD, std::string> g_mapOfAnimHierarchyHashes;
 extern void * g_Clump;
-extern CAnimBlendStaticAssociation * pAnimStaticAssoc1;
-extern CAnimBlendStaticAssociation * pAnimStaticAssoc2;
-
 extern hCAnimBlendStaticAssociation_Init OLD_CAnimBlendStaticAssociation_Init;
 extern hCAnimBlendHierarchy_SetName OLD_CAnimBlendHierarchy_SetName;
 extern hGetUppercaseKey OLD_GetUppercaseKey;
@@ -92,14 +89,13 @@ void ModifyAnimStaticAssocation ( void * pClump, CAnimBlendStaticAssociation * p
 {
 
     CAnimBlendHierarchy* pAnimBlendHierarchy1 = pAnimStaticAssocToModify->m_pAnimBlendHier;
-    CAnimBlendHierarchy* pAnimBlendHierarchy2 = pAnimStaticAssoc2->m_pAnimBlendHier;
-
     
     // 241: run_wuzi from custom IFP
     // 242: SEAT_down from custom IFP
     // 127: facanger
 
     CAnimBlendHierarchy* pCustomAnimBlendHierarchy = &g_IFPs[0].AnimationHierarchies[242];
+
 
     const char * AnimationName = GetNameFromHash(pCustomAnimBlendHierarchy->m_hashKey);
     if (AnimationName != nullptr)
@@ -114,6 +110,7 @@ void ModifyAnimStaticAssocation ( void * pClump, CAnimBlendStaticAssociation * p
 
     ofs << std::endl;
 
+    pCustomAnimBlendHierarchy->m_hashKey = pAnimBlendHierarchy1->m_hashKey;
     pCustomAnimBlendHierarchy->m_nAnimBlockId = pAnimBlendHierarchy1->m_nAnimBlockId;
 
     __asm 
@@ -124,18 +121,11 @@ void ModifyAnimStaticAssocation ( void * pClump, CAnimBlendStaticAssociation * p
 
     OLD_CAnimBlendStaticAssociation_Init(pClump, pCustomAnimBlendHierarchy);
     
-    //OLD_CAnimBlendStaticAssociation_Init( pClump, pAnimBlendHierarchy2);
 
     __asm pop ecx;
 
-    // commenting this line will allow you to shoot with weapons while playing animations
-    //pAnimStaticAssocToModify->m_nFlags = pAnimStaticAssoc2->m_nFlags;
-
     printf(
-        "pClump: %p\n pAnimBlendHierarchy1->m_hashKey: %d\n pAnimBlendHierarchy2->m_hashKey: %d\n\n", 
-        pClump, 
-        pAnimBlendHierarchy1->m_hashKey,
-        pAnimBlendHierarchy2->m_hashKey);
+        "pClump: %p\n \n\n", pClump);
 
 
 

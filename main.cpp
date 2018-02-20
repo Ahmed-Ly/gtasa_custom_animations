@@ -9,7 +9,6 @@
 #pragma comment(lib, "detours.lib")
 
 void PrepareOutputStreams();
-void getStaticAssociations(void);
 inline bool isKeyPressed(unsigned int keyCode);
  
 
@@ -18,10 +17,8 @@ extern std::wofstream ofsW;
 
 std::map<DWORD, std::string> g_mapOfAnimHierarchyHashes;
 
-char * AnimationToReplaceWithName = new char[32]; // "SEAT_down";
 void * g_Clump = nullptr;
-bool g_StaticAssocsSet = false;
-bool g_HashKeyModified = false;
+bool g_PlayCustomAnimations = false;
 
 std::vector <CAnimBlendStaticAssociation *> g_StaticAssocations;
 
@@ -154,29 +151,8 @@ DWORD WINAPI Main_thread(LPVOID lpParam)
                 OnePressTMR = clock();
                 ofs << std::endl << "Pressed Key '5'" << std::endl << std::endl;
 
-                if ( isAnimationHierarchyLoaded("run_stop"))
-                {
-                    static bool isSeatdownAnimationSetOnce = false;
-
-                    if (!isSeatdownAnimationSetOnce)
-                    {
-                        isSeatdownAnimationSetOnce = true;
-
-                        strncpy(AnimationToReplaceWithName, "run_wuzi", sizeof("run_wuzi"));
-                        ofs << std::endl << "AnimationToReplaceWithName: " << AnimationToReplaceWithName << std::endl << std::endl;
-                    }
-                    else
-                    {
-                        strncpy(AnimationToReplaceWithName, "KO_shot_stom", sizeof("KO_shot_stom"));
-                        ofs << std::endl << "AnimationToReplaceWithName: " << AnimationToReplaceWithName << std::endl << std::endl;
-                    }
-
-                    // So static animation assoications are updated again in AddAnimation
-                    g_HashKeyModified = false;
-
-
-                    getStaticAssociations();
-                }
+               g_PlayCustomAnimations = true;
+         
             }
         }
     } 
@@ -214,40 +190,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
-void getStaticAssociations ( void )
-{
-
-    ofs << "setting Static associations now" << std::endl;
-
-    for (size_t i = 0; i < g_StaticAssocations.size(); i++)
-    {
-        CAnimBlendStaticAssociation * pThis = g_StaticAssocations[i];
-
-        CAnimBlendHierarchy* pAnimBlendHierarchy = pThis->m_pAnimBlendHier;
-
-        // Animation to be replaced with
-        if (OLD_GetUppercaseKey(AnimationToReplaceWithName) == pAnimBlendHierarchy->m_hashKey)
-        {
-            pAnimStaticAssoc2 = pThis;
-
-            ofs << std::endl << std::endl << "FOUND pAnimStaticAssoc2: " << std::endl;
-
-            const char * AnimationName = GetNameFromHash(pAnimBlendHierarchy->m_hashKey);
-            if (AnimationName != nullptr)
-            {
-                ofs << "AnimationName: " << AnimationName << std::endl;
-            }
-            else
-            {
-                ofs << "GetNameFromHash: could not get animation name" << std::endl;
-            }
-
-            ofs << "pAnimBlendHierarchy->m_hashKey: " << pAnimBlendHierarchy->m_hashKey << std::endl
-                << "pThis->m_nAnimGroup: " << pThis->m_nAnimGroup << std::endl << "pThis->m_nAnimID: " << pThis->m_nAnimID << std::endl << std::endl;
-        }
-    }
-    g_StaticAssocsSet = true;
-}
 
 inline bool isKeyPressed(unsigned int keyCode) {
     return (GetKeyState(keyCode) & 0x8000) != 0;
