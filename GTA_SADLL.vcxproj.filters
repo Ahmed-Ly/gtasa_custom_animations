@@ -42,6 +42,9 @@
     <ClCompile Include="LoadPedAnimIFPFile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IFPBoneArrays.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="detours.h">
