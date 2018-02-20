@@ -8,19 +8,25 @@
 #define IFP_TOTAL_SEQUENCES 32 // 32 because there are 32 bones in a ped model 
 
 
-struct IFPHeader
+struct IFPHeaderV1
 {
-    // 4 + 4 + 24 + 4 = 36 bytes
+    int32_t   OffsetEOF;
+    char      InternalFileName[24];
+    int32_t   TotalAnimations;
+};
 
-    char      Version[4];
+struct IFPHeaderV2
+{
     int32_t   OffsetEOF;
     char      InternalFileName[24];
     int32_t   TotalAnimations;
 };
 
 struct IFP : FileLoader
-{
-    IFPHeader Header;
+{   
+    bool isVersion1;
+    IFPHeaderV1 HeaderV1;
+    IFPHeaderV2 HeaderV2;
     std::vector <CAnimBlendHierarchy> AnimationHierarchies;
     std::vector <CAnimBlendSequence> AnimationSequences;
     unsigned char * KeyFramesArray;
@@ -95,7 +101,14 @@ typedef void *(__cdecl* hCMemoryMgr_Malloc)
 
 
 void LoadIFPFile(const char * FilePath);
-void ReadIfpAnp23(IFP * IFPElement, bool anp3);
+void ReadIFPVersion1(IFP * IFPElement);
+void ReadIFPVersion2(IFP * IFPElement, bool anp3);
+
+void insertAnimDummySequence(bool anp3, CAnimBlendHierarchy * pAnimHierarchy, size_t SequenceIndex);
+int32_t getBoneIDFromName(std::string const& BoneName);
+std::string getCorrectBoneNameFromName(std::string const& BoneName);
+std::string getCorrectBoneNameFromID(int32_t & BoneID);
+size_t getCorrectBoneIndexFromID(int32_t & BoneID);
 
 void CAnimBlendHierarchy_Constructor(CAnimBlendHierarchy * pAnimHierarchy);
 void CAnimBlendSequence_Constructor(CAnimBlendSequence * pSequence);

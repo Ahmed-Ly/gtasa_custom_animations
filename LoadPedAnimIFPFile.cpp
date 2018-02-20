@@ -89,15 +89,13 @@ void LoadPedAnimFile ( const char * FilePath )
     {
         printf("IfpLoader: File loaded. Parsing it now.\n");
 
-        IFPHeader * Header = &IFPElement.Header;
+        char Version[4];
 
-        IFPElement.readBuffer < IFPHeader >(Header);
+        IFPElement.readBytes(Version, sizeof(Version));
 
-        ofs << "Total Animations: " << Header->TotalAnimations << std::endl;
-
-        if (strncmp(Header->Version, "ANP2", sizeof(Header->Version)) == 0 || strncmp(Header->Version, "ANP3", sizeof(Header->Version)) == 0)
+        if (strncmp(Version, "ANP2", sizeof(Version)) == 0 || strncmp(Version, "ANP3", sizeof(Version)) == 0)
         {
-            bool anp3 = strncmp(Header->Version, "ANP3", sizeof(Header->Version)) == 0;
+            bool anp3 = strncmp(Version, "ANP3", sizeof(Version)) == 0;
 
             ReadPedIfpAnp23(&IFPElement, anp3);
         }
@@ -116,14 +114,16 @@ void LoadPedAnimFile ( const char * FilePath )
 
 void ReadPedIfpAnp23(IFP * IFPElement, bool anp3)
 {
-    const char * BlockName = IFPElement->Header.InternalFileName;
+    IFPElement->readBuffer < IFPHeaderV2 >(&IFPElement->HeaderV2);
+
+    const char * BlockName = IFPElement->HeaderV2.InternalFileName;
 
     CAnimBlock* animBlock = OLD_GetAnimationBlock ( BlockName );
     if (animBlock)
     {
         if (animBlock->m_numAnims  == 0)
         {
-            animBlock->m_numAnims = IFPElement->Header.TotalAnimations;
+            animBlock->m_numAnims = IFPElement->HeaderV2.TotalAnimations;
             animBlock->m_idOffset = *g_numAnimations;
         }
     }
@@ -135,7 +135,7 @@ void ReadPedIfpAnp23(IFP * IFPElement, bool anp3)
 
         strncpy(animBlock->m_name, BlockName, 0x10); // 0x10 = 16 in decimal
 
-        animBlock->m_numAnims = IFPElement->Header.TotalAnimations;
+        animBlock->m_numAnims = IFPElement->HeaderV2.TotalAnimations;
         animBlock->m_idOffset = *g_numAnimations;
         animBlock->m_assocGroup = OLD_GetFirstAssocGroup(animBlock->m_name);
     }

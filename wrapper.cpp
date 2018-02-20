@@ -10,10 +10,7 @@
 extern std::ofstream ofs;
 extern std::wofstream ofsW;
 
-extern bool g_StaticAssocsSet;
-extern bool g_HashKeyModified;
-extern CAnimBlendStaticAssociation * pAnimStaticAssoc1;
-extern CAnimBlendStaticAssociation * pAnimStaticAssoc2;
+extern bool g_PlayCustomAnimations;
 
 extern DWORD g_CurrentHierarchyAnimationHash;
 
@@ -148,6 +145,7 @@ CAnimBlendAssociation * NEW_AddAnimation
 )
 {
 
+
     ofs << "NEW_AddAnimation: " << std::endl;
 
 
@@ -173,14 +171,21 @@ CAnimBlendAssociation * NEW_AddAnimation
                 (OLD_GetUppercaseKey("muscleidle_csaw") ==pGatewayAnimHierarchy->m_hashKey)
                 ||
                 (OLD_GetUppercaseKey("SEAT_down") == pGatewayAnimHierarchy->m_hashKey)
+                ||
+                (OLD_GetUppercaseKey("CAR_getin_LHS") == pGatewayAnimHierarchy->m_hashKey)
+                ||
+                (OLD_GetUppercaseKey("CAR_getin_RHS") == pGatewayAnimHierarchy->m_hashKey)
+                ||
+                (OLD_GetUppercaseKey("CAR_close_LHS") == pGatewayAnimHierarchy->m_hashKey)
+           
+            
+            
             )
         {
-            ofs << "run_stop anim!! " << std::endl;
+            ofs << "okay, we can play custom anim now!! " << std::endl;
 
-            if (g_StaticAssocsSet ) //&& !g_HashKeyModified)
+            if (g_PlayCustomAnimations)
             {
-                //g_HashKeyModified = true;
-
                 CAnimBlendStaticAssociation * pAnimStaticAssocToModify = GetAnimStaticAssocBy_GroupId_AnimId(animGroup, animID);
 
                 ofs << "Calling ModifyAnimStaticAssocation now" << std::endl;
@@ -207,12 +212,18 @@ CAnimBlendAssociation * NEW_AddAnimation
     if (AnimationName != nullptr)
     {
         ofs << std::endl << "AnimationName: " << AnimationName << std::endl;
+
+        printf(
+            "pClump: %p  |  AnimationName: %s\n ",
+            pClump, AnimationName);
     }
     else
     {
         ofs << "GetNameFromHash: could not get animation name" << std::endl;
         ofs << "HashKey ( Not Found ) : " << pAnimAssoc->m_pAnimBlendHierarchy->m_hashKey << std::endl;
     }
+
+
 
     ofs << std::endl;
 

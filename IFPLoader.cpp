@@ -17,94 +17,13 @@ hCAnimBlendHierarchy_RemoveQuaternionFlips OLD_CAnimBlendHierarchy_RemoveQuatern
 hCAnimBlendHierarchy_CalcTotalTime         OLD_CAnimBlendHierarchy_CalcTotalTime = (hCAnimBlendHierarchy_CalcTotalTime)0x4CF2F0;
 
 
-void insertAnimDummySequence(bool anp3, CAnimBlendHierarchy * pAnimHierarchy, size_t SequenceIndex);
-int32_t getBoneIDFromName(std::string const& BoneName);
-std::string getCorrectBoneNameFromName(std::string const& BoneName);
-std::string getCorrectBoneNameFromID(int32_t & BoneID);
-size_t getCorrectBoneIndexFromID(int32_t & BoneID);
-
-DWORD BoneIds[] =
-{
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    8,
-    6,
-    7,
-    31,
-    32,
-    33,
-    34,
-    35,
-    36,
-    21,
-    22,
-    23,
-    24,
-    25,
-    26,
-    302,
-    301,
-    201,
-    41,
-    42,
-    43,
-    44,
-    51,
-    52,
-    53,
-    54
-};
-
-char BoneNames[][24] = {
-    "Normal",
-    "Pelvis",
-    "Spine",
-    "Spine1",
-    "Neck",
-    "Head",
-    "Jaw",
-    "L Brow",
-    "R Brow",
-    "Bip01 L Clavicle",
-    "L UpperArm",
-    "L ForeArm",
-    "L Hand",
-    "L Finger",
-    "L Finger01",
-    "Bip01 R Clavicle",
-    "R UpperArm",
-    "R ForeArm",
-    "R Hand",
-    "R Finger",
-    "R Finger01",
-    "L breast",
-    "R breast",
-    "Belly",
-    "L Thigh",
-    "L Calf",
-    "L Foot",
-    "L Toe0",
-    "R Thigh",
-    "R Calf",
-    "R Foot",
-    "R Toe0"
-};
-
+extern DWORD BoneIds[];
+extern char BoneNames[][24];
 
 
 void LoadIFPFile(const char * FilePath)
 {
-    static size_t IfpIndex = 0;
-
-    g_IFPs.emplace_back ();
-
-    IFP & IFPElement = g_IFPs [ IfpIndex ];
-
-    IfpIndex++;
+    IFP IFPElement;
 
     IFPElement.createLoader(FilePath);
 
@@ -112,21 +31,23 @@ void LoadIFPFile(const char * FilePath)
     {
         printf("IfpLoader: File loaded. Parsing it now.\n");
 
-        IFPHeader * Header = &IFPElement.Header;
+        char Version[4];
+       
+        IFPElement.readBytes ( Version, sizeof(Version) );
 
-        IFPElement.readBuffer < IFPHeader >(Header);
-
-        ofs << "Total Animations: " << Header->TotalAnimations << std::endl;
-
-        if (strncmp(Header->Version, "ANP2", sizeof(Header->Version)) == 0 || strncmp(Header->Version, "ANP3", sizeof(Header->Version)) == 0)
+        if (strncmp(Version, "ANP2", sizeof(Version)) == 0 || strncmp(Version, "ANP3", sizeof(Version)) == 0)
         {
-            bool anp3 = strncmp(Header->Version, "ANP3", sizeof(Header->Version)) == 0;
+            IFPElement.isVersion1 = false;
 
-            ReadIfpAnp23(&IFPElement, anp3);
+            bool anp3 = strncmp(Version, "ANP3", sizeof(Version)) == 0;
+
+            ReadIFPVersion2 ( &IFPElement, anp3 );
         }
         else
         {
-            //ReadANP1(stream, loadCompressed, uncompressedAnims);
+            IFPElement.isVersion1 = true;
+
+            ReadIFPVersion1 ( &IFPElement );
         }
 
         // We are unloading the data because we don't need to read it anymore. 
@@ -134,7 +55,7 @@ void LoadIFPFile(const char * FilePath)
         IFPElement.unloadFile();
     }
 
-    //g_IFPs.push_back(IFPElement);
+    g_IFPs.push_back(IFPElement);
 
     printf("Exiting LoadIFPFile function\n");
     ofs << "Exiting LoadIFPFile function" << std::endl;
@@ -142,15 +63,16 @@ void LoadIFPFile(const char * FilePath)
 
 
 
-void ReadIfpAnp23(IFP * IFPElement, bool anp3)
+void ReadIFPVersion2(IFP * IFPElement, bool anp3)
 {
-    IFPElement->AnimationHierarchies.resize(IFPElement->Header.TotalAnimations);
+    IFPElement->readBuffer < IFPHeaderV2 > ( &IFPElement->HeaderV2 );
+
+    IFPElement->AnimationHierarchies.resize(IFPElement->HeaderV2.TotalAnimations);
 
 
     for (size_t i = 0; i < IFPElement->AnimationHierarchies.size(); i++)
     {
         CAnimBlendHierarchy * pAnimHierarchy = &IFPElement->AnimationHierarchies[i];
-
 
         CAnimBlendHierarchy_Constructor(pAnimHierarchy);
 
@@ -163,7 +85,7 @@ void ReadIfpAnp23(IFP * IFPElement, bool anp3)
 
         printf("Animation Name: %s    |  Index: %d \n", AnimationNode.Name, i);
 
-        unsigned char *st = nullptr;
+        unsigned char * pKeyFrames = nullptr;
         if (anp3)
         {
             IFPElement->readBuffer < int32_t >(&AnimationNode.FrameSize);
@@ -171,7 +93,7 @@ void ReadIfpAnp23(IFP * IFPElement, bool anp3)
 
             pAnimHierarchy->m_bRunningCompressed = AnimationNode.isCompressed & 1;
 
-            st = (unsigned char*)OLD_CMemoryMgr_Malloc(AnimationNode.FrameSize);
+            pKeyFrames = (unsigned char*)OLD_CMemoryMgr_Malloc(AnimationNode.FrameSize);
         }
 
         OLD_CAnimBlendHierarchy_SetName(pAnimHierarchy, (char*)&AnimationNode.Name);
@@ -275,13 +197,13 @@ void ReadIfpAnp23(IFP * IFPElement, bool anp3)
                 }
                 else
                 { 
-                    OLD_CAnimBlendSequence_SetNumFrames(&Sequence, ObjectNode.TotalFrames, bIsRoot, bIsCompressed, st);
+                    OLD_CAnimBlendSequence_SetNumFrames(&Sequence, ObjectNode.TotalFrames, bIsRoot, bIsCompressed, pKeyFrames);
 
                     IFPElement->readBytes(Sequence.m_pFrames, data_size);
 
                     if (anp3)
                     {
-                        st += data_size;
+                        pKeyFrames += data_size;
                         Sequence.m_nFlags |= 8u;
                     }
 
@@ -324,6 +246,10 @@ void ReadIfpAnp23(IFP * IFPElement, bool anp3)
     }
 }
 
+void ReadIFPVersion1 ( IFP * IFPElement )
+{
+
+}
 
 void insertAnimDummySequence ( bool anp3, CAnimBlendHierarchy * pAnimHierarchy, size_t SequenceIndex)
 {
