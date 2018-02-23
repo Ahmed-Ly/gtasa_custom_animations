@@ -24,9 +24,6 @@
     <ClCompile Include="wrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MessageBoxFormatter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="HierarchySwitch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

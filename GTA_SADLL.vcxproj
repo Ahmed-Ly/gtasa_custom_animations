@@ -148,7 +148,6 @@
     <ClCompile Include="IFPLoader.cpp" />
     <ClCompile Include="LoadPedAnimIFPFile.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="MessageBoxFormatter.cpp" />
     <ClCompile Include="output.cpp" />
     <ClCompile Include="wrapper.cpp" />
   </ItemGroup>
