@@ -21,6 +21,14 @@ extern DWORD BoneIds[];
 extern char BoneNames[][24];
 
 
+std::string convertStringToMapKey(char * String);
+IFP_FrameType getFrameTypeFromFourCC(char * FourCC);
+size_t GetSizeOfCompressedFrame(IFP_FrameType FrameType);
+
+void ReadKrtsFramesAsCompressed ( IFP * IFPElement, BYTE * pKeyFrames, int32_t TotalFrames );
+void ReadKrt0FramesAsCompressed ( IFP * IFPElement, BYTE * pKeyFrames, int32_t TotalFrames );
+void ReadKr00FramesAsCompressed ( IFP * IFPElement, BYTE * pKeyFrames, int32_t TotalFrames );
+
 void LoadIFPFile(const char * FilePath)
 {
     IFP IFPElement;
@@ -96,7 +104,7 @@ void ReadIFPVersion2(IFP * IFPElement, bool anp3)
             pKeyFrames = (unsigned char*)OLD_CMemoryMgr_Malloc(AnimationNode.FrameSize);
         }
 
-        OLD_CAnimBlendHierarchy_SetName(pAnimHierarchy, (char*)&AnimationNode.Name);
+        OLD_CAnimBlendHierarchy_SetName(pAnimHierarchy, AnimationNode.Name);
 
         pAnimHierarchy->m_nSeqCount = AnimationNode.TotalObjects;
         pAnimHierarchy->m_nAnimBlockId = 0;
@@ -117,11 +125,7 @@ void ReadIFPVersion2(IFP * IFPElement, bool anp3)
 
             IFPElement->readBuffer < Object >(&ObjectNode);
             
-            std::string BoneName (ObjectNode.Name);
-            std::transform(BoneName.begin(), BoneName.end(), BoneName.begin(), ::tolower); // convert the bone name to lowercase
-
-            BoneName.erase(std::remove(BoneName.begin(), BoneName.end(), ' '), BoneName.end()); // remove white spaces
-
+            std::string BoneName        = convertStringToMapKey (ObjectNode.Name);
             std::string CorrectBoneName;
             
             bool bSkipSequence = false;
@@ -133,11 +137,15 @@ void ReadIFPVersion2(IFP * IFPElement, bool anp3)
                     bSkipSequence = true;
                 }
 
-                CorrectBoneName   = getCorrectBoneNameFromName(BoneName);
+                CorrectBoneName = getCorrectBoneNameFromName(BoneName);
             }
             else
             {
                 CorrectBoneName = getCorrectBoneNameFromID(ObjectNode.BoneID);
+                if (CorrectBoneName == "Unknown")
+                {
+                    CorrectBoneName = getCorrectBoneNameFromName(BoneName);
+                }
             }
 
             memset (ObjectNode.Name, 0, sizeof(Object::Name));
@@ -221,7 +229,6 @@ void ReadIFPVersion2(IFP * IFPElement, bool anp3)
             it = MapOfSequences.find(BoneName);
             if (it != MapOfSequences.end())
             {
-              
                 CAnimBlendSequence * pSequence = (CAnimBlendSequence*)((BYTE*)pAnimHierarchy->m_pSequences + (sizeof(CAnimBlendSequence) * SequenceIndex));
 
                 memcpy (pSequence, &it->second, sizeof(CAnimBlendSequence));
@@ -248,8 +255,317 @@ void ReadIFPVersion2(IFP * IFPElement, bool anp3)
 
 void ReadIFPVersion1 ( IFP * IFPElement )
 {
+    uint32_t OffsetEOF;
 
+    IFPElement->readBuffer < uint32_t > ( &OffsetEOF );
+    ROUNDSIZE (OffsetEOF);
+
+    IFP_INFO Info;
+    IFPElement->readBytes ( &Info, sizeof ( IFP_BASE ) );
+    ROUNDSIZE (Info.Base.Size);
+
+    IFPElement->readBytes(&Info.Entries, Info.Base.Size);
+
+    ofs << "Total Animations: " << Info.Entries << std::endl;
+
+    IFPElement->AnimationHierarchies.resize ( Info.Entries );
+
+
+    for (size_t i = 0; i < IFPElement->AnimationHierarchies.size(); i++)
+    {
+        CAnimBlendHierarchy * pAnimHierarchy = &IFPElement->AnimationHierarchies[i];
+
+        CAnimBlendHierarchy_Constructor(pAnimHierarchy);
+
+        IFP_NAME Name;
+        IFPElement->readBuffer < IFP_NAME > ( &Name );
+        ROUNDSIZE ( Name.Base.Size );
+
+        char AnimationName [ 24 ];
+        IFPElement->readCString (AnimationName, Name.Base.Size);
+
+        ofs << "Animation Name: " << AnimationName << "  |  Index: " << i << std::endl;
+        printf("Animation Name: %s    |  Index: %d \n", AnimationName, i);
+      
+        OLD_CAnimBlendHierarchy_SetName(pAnimHierarchy, AnimationName);
+
+        // We are going to keep it compressed, just like IFP_V2        
+        pAnimHierarchy->m_bRunningCompressed = true;
+        
+        ofs << "going to read Dgan " << std::endl;
+
+        IFP_DGAN Dgan;
+        IFPElement->readBytes ( &Dgan, sizeof ( IFP_BASE ) * 2 );
+        ROUNDSIZE ( Dgan.Base.Size );
+        ROUNDSIZE ( Dgan.Info.Base.Size );
+
+        ofs << "going to read Dgan.Info.Entries  |  Dgan.Info.Base.Size : " << Dgan.Info.Base.Size << std::endl;
+
+        IFPElement->readBytes ( &Dgan.Info.Entries, Dgan.Info.Base.Size );
+    
+        ofs << "Total Sequences: " << Dgan.Info.Entries << std::endl;
+
+        pAnimHierarchy->m_nSeqCount = Dgan.Info.Entries;
+        pAnimHierarchy->m_nAnimBlockId = 0;
+        pAnimHierarchy->field_B = 0;
+
+       char * pNewSequencesMemory = (char *)operator new(12 * IFP_TOTAL_SEQUENCES + 4);//  Allocate memory for sequences ( 12 * seq_count + 4 )
+
+        *(DWORD *)pNewSequencesMemory = IFP_TOTAL_SEQUENCES;
+
+        pAnimHierarchy->m_pSequences = (CAnimBlendSequence *)(pNewSequencesMemory + 4);
+ 
+        std::map < std::string, CAnimBlendSequence > MapOfSequences;
+
+        for (size_t SequenceIndex = 0; SequenceIndex < pAnimHierarchy->m_nSeqCount; SequenceIndex++)
+        {
+            IFP_CPAN Cpan;
+            IFPElement->readBuffer < IFP_CPAN > ( &Cpan );
+            ROUNDSIZE ( Cpan.Base.Size );
+
+            IFP_ANIM Anim;
+            IFPElement->readBytes ( &Anim, sizeof ( IFP_BASE ) );
+            ROUNDSIZE ( Anim.Base.Size );
+            
+            IFPElement->readBytes ( &Anim.Name, Anim.Base.Size );
+
+            if (Anim.Frames == 0)
+            {
+                continue;
+            }
+
+            int32_t BoneID = -1;
+            
+            if (Anim.Base.Size == 0x2C)
+            {
+                BoneID = Anim.Next;
+            }
+            if (Anim.Unk)
+            {
+                break;
+            }
+
+            std::string BoneName = convertStringToMapKey(Anim.Name);
+            std::string CorrectBoneName;
+
+            bool bSkipSequence = false;
+            if (BoneID == -1)
+            {
+                BoneID = getBoneIDFromName(BoneName);
+                if (BoneID == -1)
+                {
+                    bSkipSequence = true;
+                }
+
+                CorrectBoneName = getCorrectBoneNameFromName(BoneName);
+            }
+            else
+            {
+                CorrectBoneName = getCorrectBoneNameFromID (BoneID);
+                
+                if (CorrectBoneName == "Unknown")
+                {
+                    ofs << "Anim.Name: " << Anim.Name << std::endl;
+                    CorrectBoneName = getCorrectBoneNameFromName(BoneName);
+                }
+            }
+
+            memset(Anim.Name, 0, sizeof(IFP_ANIM::Name));
+            strncpy(Anim.Name, CorrectBoneName.c_str(), CorrectBoneName.size() + 1);
+    
+            ofs << "Anim.Name: " << Anim.Name << "   |  BoneID: " << BoneID; ///<< std::endl;
+
+            CAnimBlendSequence Sequence;
+            if (!bSkipSequence)
+            {
+                CAnimBlendSequence_Constructor(&Sequence);
+
+                OLD_CAnimBlendSequence_SetName(&Sequence, Anim.Name);
+
+                OLD_CAnimBlendSequence_SetBoneTag(&Sequence, BoneID);
+            }
+            
+            size_t   FrameSizeInBytes = 0;
+            IFP_KFRM Kfrm;
+            IFPElement->readBuffer < IFP_KFRM > ( &Kfrm );
+
+            IFP_FrameType    FrameType           = getFrameTypeFromFourCC ( Kfrm.Base.FourCC );
+            size_t           CompressedFrameSize = GetSizeOfCompressedFrame ( FrameType );
+            BYTE          *  pKeyFrames          = ( BYTE * ) OLD_CMemoryMgr_Malloc ( CompressedFrameSize * Anim.Frames );
+
+            if (!bSkipSequence)
+            {
+                bool bIsRoot = FrameType != IFP_FrameType::KR00;
+                OLD_CAnimBlendSequence_SetNumFrames ( &Sequence, Anim.Frames, bIsRoot, pAnimHierarchy->m_bRunningCompressed, pKeyFrames );
+            }
+
+            if (FrameType == IFP_FrameType::KRTS)
+            {
+                ofs << "  |  FrameType: KRTS" << std::endl;
+
+                ReadKrtsFramesAsCompressed ( IFPElement,  pKeyFrames, Anim.Frames );
+            }
+            else if (FrameType == IFP_FrameType::KRT0)
+            {
+                ofs << "  |  FrameType: KRT0" << std::endl;
+                ReadKrt0FramesAsCompressed ( IFPElement, pKeyFrames, Anim.Frames );
+            }
+            else if (FrameType == IFP_FrameType::KR00)
+            {
+                ofs << "  |  FrameType: KR00" << std::endl;
+                ReadKr00FramesAsCompressed ( IFPElement, pKeyFrames, Anim.Frames );
+            }
+
+            if (!bSkipSequence)
+            {
+                MapOfSequences [ CorrectBoneName ] = Sequence;
+            }
+       
+        }
+
+        std::map < std::string, CAnimBlendSequence >::iterator it;
+        for (size_t SequenceIndex = 0; SequenceIndex < IFP_TOTAL_SEQUENCES; SequenceIndex++)
+        {
+            std::string BoneName = BoneNames[SequenceIndex];
+            DWORD        BoneID = BoneIds[SequenceIndex];
+            
+            it = MapOfSequences.find(BoneName);
+            if (it != MapOfSequences.end())
+            {
+                CAnimBlendSequence * pSequence = (CAnimBlendSequence*)((BYTE*)pAnimHierarchy->m_pSequences + (sizeof(CAnimBlendSequence) * SequenceIndex));
+
+                memcpy (pSequence, &it->second, sizeof(CAnimBlendSequence));
+            }
+            else
+            {
+                insertAnimDummySequence ( false, pAnimHierarchy, SequenceIndex );
+            }
+        }
+
+        // This order is very important. As we need support for all 32 bones, we must change the total sequences count
+        pAnimHierarchy->m_nSeqCount = IFP_TOTAL_SEQUENCES;
+
+        ofs << std::endl << std::endl;
+
+        if (!pAnimHierarchy->m_bRunningCompressed)
+        {
+            Call_CAnimBlendHierarchy_RemoveQuaternionFlips(pAnimHierarchy);
+
+            Call_CAnimBlendHierarchy_CalcTotalTime(pAnimHierarchy);
+        }
+    }
 }
+
+
+void ReadKrtsFramesAsCompressed ( IFP * IFPElement, BYTE * pKeyFrames, int32_t TotalFrames )
+{
+    for (int32_t FrameIndex = 0; FrameIndex < TotalFrames; FrameIndex++)
+    {
+        IFP_Compressed_KRT0 * CompressedKrt0 = (IFP_Compressed_KRT0 *)((BYTE*)pKeyFrames + sizeof(IFP_Compressed_KRT0) * FrameIndex);
+
+        IFP_KRTS Krts;
+        IFPElement->readBuffer < IFP_KRTS >(&Krts);
+
+        CompressedKrt0->Rotation.X    = static_cast < int16_t > ( ((-Krts.Rotation.X) * 4096.0f) );
+        CompressedKrt0->Rotation.Y    = static_cast < int16_t > ( ((-Krts.Rotation.Y) * 4096.0f) );
+        CompressedKrt0->Rotation.Z    = static_cast < int16_t > ( ((-Krts.Rotation.Z) * 4096.0f) );
+        CompressedKrt0->Rotation.W    = static_cast < int16_t > ( (Krts.Rotation.W  * 4096.0f) );
+
+        CompressedKrt0->Time          = static_cast < int16_t > ( (Krts.Time * 60.0f + 0.5f) );
+
+        CompressedKrt0->Translation.X = static_cast < int16_t > ( (Krts.Translation.X * 1024.0f) );
+        CompressedKrt0->Translation.Y = static_cast < int16_t > ( (Krts.Translation.Y * 1024.0f) );
+        CompressedKrt0->Translation.Z = static_cast < int16_t > ( (Krts.Translation.Z * 1024.0f) );
+    }
+}
+
+void ReadKrt0FramesAsCompressed ( IFP * IFPElement, BYTE * pKeyFrames, int32_t TotalFrames )
+{
+    for (int32_t FrameIndex = 0; FrameIndex < TotalFrames; FrameIndex++)
+    {
+        IFP_Compressed_KRT0 * CompressedKrt0 = (IFP_Compressed_KRT0 *)((BYTE*)pKeyFrames + sizeof(IFP_Compressed_KRT0) * FrameIndex);
+
+        IFP_KRT0 Krt0;
+        IFPElement->readBuffer < IFP_KRT0 > ( &Krt0 );
+
+        CompressedKrt0->Rotation.X = static_cast < int16_t > ( ((-Krt0.Rotation.X) * 4096.0f) );
+        CompressedKrt0->Rotation.Y = static_cast < int16_t > ( ((-Krt0.Rotation.Y) * 4096.0f) );
+        CompressedKrt0->Rotation.Z = static_cast < int16_t > ( ((-Krt0.Rotation.Z) * 4096.0f) );
+        CompressedKrt0->Rotation.W = static_cast < int16_t > ( (Krt0.Rotation.W  * 4096.0f) );
+
+        CompressedKrt0->Time = static_cast < int16_t > ( (Krt0.Time * 60.0f + 0.5f) );
+
+        CompressedKrt0->Translation.X = static_cast < int16_t > ( (Krt0.Translation.X * 1024.0f) ); 
+        CompressedKrt0->Translation.Y = static_cast < int16_t > ( (Krt0.Translation.Y * 1024.0f) );
+        CompressedKrt0->Translation.Z = static_cast < int16_t > ( (Krt0.Translation.Z * 1024.0f) );
+    }
+}
+
+void ReadKr00FramesAsCompressed ( IFP * IFPElement, BYTE * pKeyFrames, int32_t TotalFrames )
+{
+    for (int32_t FrameIndex = 0; FrameIndex < TotalFrames; FrameIndex++)
+    {
+        IFP_Compressed_KR00 * CompressedKr00 = (IFP_Compressed_KR00 *)((BYTE*)pKeyFrames + sizeof(IFP_Compressed_KR00) * FrameIndex);
+
+        IFP_KR00 Kr00;
+        IFPElement->readBuffer < IFP_KR00 > ( &Kr00 );
+
+        CompressedKr00->Rotation.X = static_cast < int16_t > ( ((-Kr00.Rotation.X) * 4096.0f) );
+        CompressedKr00->Rotation.Y = static_cast < int16_t > ( ((-Kr00.Rotation.Y) * 4096.0f) );
+        CompressedKr00->Rotation.Z = static_cast < int16_t > ( ((-Kr00.Rotation.Z) * 4096.0f) );
+        CompressedKr00->Rotation.W = static_cast < int16_t > ( (Kr00.Rotation.W  * 4096.0f) );
+
+        CompressedKr00->Time = static_cast < int16_t > ( (Kr00.Time * 60.0f + 0.5f) );
+
+    }
+}
+
+
+size_t GetSizeOfCompressedFrame ( IFP_FrameType FrameType )
+{
+    if (FrameType == IFP_FrameType::KRTS)
+    {
+        return sizeof(IFP_Compressed_KRT0);
+    }
+    else if (FrameType == IFP_FrameType::KRT0)
+    {
+        return sizeof(IFP_Compressed_KRT0);
+    }
+    else if (FrameType == IFP_FrameType::KR00)
+    {
+        return sizeof(IFP_Compressed_KR00);
+    }
+    return 0;
+}
+
+std::string convertStringToMapKey(char * String)
+{
+    std::string ConvertedString(String);
+    std::transform(ConvertedString.begin(), ConvertedString.end(), ConvertedString.begin(), ::tolower); // convert the bone name to lowercase
+
+    ConvertedString.erase(std::remove(ConvertedString.begin(), ConvertedString.end(), ' '), ConvertedString.end()); // remove white spaces
+
+    return ConvertedString;
+}
+
+IFP_FrameType getFrameTypeFromFourCC ( char * FourCC )
+{
+    if (strncmp(FourCC, "KRTS", 4) == 0)
+    {
+        return IFP_FrameType::KRTS;
+    }
+    else if (strncmp(FourCC, "KRT0", 4) == 0)
+    {
+        return IFP_FrameType::KRT0;
+    }
+    else if (strncmp(FourCC, "KR00", 4) == 0)
+    {
+        return IFP_FrameType::KR00;
+    }
+
+    return IFP_FrameType::UNKNOWN_FRAME;
+}
+
 
 void insertAnimDummySequence ( bool anp3, CAnimBlendHierarchy * pAnimHierarchy, size_t SequenceIndex)
 {
@@ -272,10 +588,10 @@ void insertAnimDummySequence ( bool anp3, CAnimBlendHierarchy * pAnimHierarchy, 
     const size_t TotalFrames = 1;
     size_t FrameSize = 10; // 10 for child, 16 for root
 
-    if (BoneID == 0) // Normal Bone
+    if (BoneID == BoneType::NORMAL)
     {
         // setting this to true means that it will have translation values
-        // Also idle_stance contains rootframe for root bone
+        // Also idle_stance contains rootframe for normal/root bone
         bIsRoot   = true;
         FrameSize = 16;
     }
@@ -573,6 +889,33 @@ int32_t getBoneIDFromName (std::string const& BoneName)
     if (BoneName == "rfoot") return BoneType::R_FOOT;
     if (BoneName == "rtoe0") return BoneType::R_TOE_0;
 
+    // for GTA 3
+    if (BoneName == "player") return BoneType::NORMAL;
+
+    if (BoneName == "swaist") return BoneType::PELVIS;
+    if (BoneName == "smid") return BoneType::SPINE;
+    if (BoneName == "storso") return BoneType::SPINE1;
+    if (BoneName == "shead") return BoneType::HEAD;
+
+    //if (BoneName == "supperarml") return BoneType::R_UPPER_ARM;
+    //if (BoneName == "slowerarml") return BoneType::R_FORE_ARM;
+
+    if (BoneName == "supperarml") return BoneType::L_UPPER_ARM;
+    if (BoneName == "slowerarml") return BoneType::L_FORE_ARM;
+    if (BoneName == "supperarmr") return BoneType::R_UPPER_ARM;
+    if (BoneName == "slowerarmr") return BoneType::R_FORE_ARM;
+
+    if (BoneName == "srhand") return BoneType::R_HAND;
+    if (BoneName == "slhand") return BoneType::L_HAND;
+
+    if (BoneName == "supperlegr") return BoneType::R_THIGH;
+    if (BoneName == "slowerlegr") return BoneType::R_CALF;
+    if (BoneName == "sfootr") return BoneType::R_FOOT;
+
+    if (BoneName == "supperlegl") return BoneType::L_THIGH;
+    if (BoneName == "slowerlegl") return BoneType::L_CALF;
+    if (BoneName == "sfootl") return BoneType::L_FOOT;
+
     ofs << "ERROR: getCorrectBoneNameFromName: correct bone ID could not be found for (BoneName): " << BoneName << std::endl;
 
     return -1;
@@ -713,7 +1056,31 @@ std::string getCorrectBoneNameFromName(std::string const& BoneName)
     if (BoneName == "rcalf") return "R Calf";
     if (BoneName == "rfoot") return "R Foot";
     if (BoneName == "rtoe0") return "R Toe0";
-      
+    
+    // For GTA 3
+    if (BoneName == "player") return "Normal";
+    if (BoneName == "swaist") return "Pelvis";
+    if (BoneName == "smid") return "Spine";
+    if (BoneName == "storso") return "Spine1";
+    if (BoneName == "shead") return "Head";
+
+    //if (BoneName == "supperarml") return "R UpperArm";
+    //if (BoneName == "slowerarml") return "R ForeArm";
+
+    if (BoneName == "supperarml") return "L UpperArm";
+    if (BoneName == "slowerarml") return "L ForeArm";
+    if (BoneName == "supperarmr") return "R UpperArm";
+    if (BoneName == "slowerarmr") return "R ForeArm";
+
+    if (BoneName == "srhand") return "R Hand";
+    if (BoneName == "slhand") return "L Hand";
+    if (BoneName == "supperlegr") return "R Thigh";
+    if (BoneName == "slowerlegr") return "R Calf";
+    if (BoneName == "sfootr") return "R Foot";
+    if (BoneName == "supperlegl") return "L Thigh";
+    if (BoneName == "slowerlegl") return "L Calf";
+    if (BoneName == "sfootl") return "L Foot";
+
     ofs <<"ERROR: getCorrectBoneNameFromName: correct bone name could not be found for (BoneName):" << BoneName << std::endl;
 
     return BoneName;

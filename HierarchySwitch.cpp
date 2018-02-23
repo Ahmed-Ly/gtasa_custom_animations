@@ -94,7 +94,11 @@ void ModifyAnimStaticAssocation ( void * pClump, CAnimBlendStaticAssociation * p
     // 242: SEAT_down from custom IFP
     // 127: facanger
 
-    CAnimBlendHierarchy* pCustomAnimBlendHierarchy = &g_IFPs[0].AnimationHierarchies[242];
+    // GAT 3
+    // 138: KO_shot_stom
+    // 143: PHONE_in
+    // 235: XPRESSscratch
+    CAnimBlendHierarchy* pCustomAnimBlendHierarchy = &g_IFPs[0].AnimationHierarchies[138]; // 45 in car
 
 
     const char * AnimationName = GetNameFromHash(pCustomAnimBlendHierarchy->m_hashKey);

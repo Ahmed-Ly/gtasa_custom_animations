@@ -5,14 +5,120 @@
 #include "FileLoader.h"
 #include <vector>
 
-#define IFP_TOTAL_SEQUENCES 32 // 32 because there are 32 bones in a ped model 
+#define ROUNDSIZE(x) if((x) & 3) (x) += 4 - ((x)&3) // credits to github.com/aap for the great macro
+#define IFP_TOTAL_SEQUENCES 32                      // 32 because there are 32 bones in a ped model 
 
 
-struct IFPHeaderV1
+struct IFP_BASE 
 {
-    int32_t   OffsetEOF;
-    char      InternalFileName[24];
-    int32_t   TotalAnimations;
+    char     FourCC[4];
+    uint32_t Size;
+};
+
+struct IFP_INFO
+{
+    IFP_BASE Base;
+    int32_t  Entries;
+    char     Name[24];
+};
+
+struct IFP_ANPK
+{
+    IFP_BASE Base;
+    IFP_INFO Info;
+};
+
+struct IFP_NAME
+{
+    IFP_BASE Base;
+};
+
+struct IFP_DGAN 
+{
+    IFP_BASE Base;
+    IFP_INFO Info;
+};
+
+struct IFP_CPAN 
+{
+    IFP_BASE Base;
+};
+
+struct IFP_ANIM 
+{
+    IFP_BASE Base;
+    char     Name[28];
+    int32_t  Frames;
+    int32_t  Unk;
+    int32_t  Next;
+    int32_t  Previous;
+};
+
+struct IFP_KFRM
+{
+    IFP_BASE Base;
+};
+
+struct Quaternion
+{
+    float X, Y, Z, W;
+};
+
+struct CVector
+{
+    float X, Y, Z;
+};
+
+struct IFP_KR00
+{
+    Quaternion Rotation;
+    float      Time;
+};
+
+struct IFP_KRT0
+{
+    Quaternion Rotation;
+    CVector    Translation;
+    float      Time;
+};
+
+struct IFP_KRTS
+{
+    Quaternion Rotation;
+    CVector    Translation;
+    CVector    Scale;
+    float      Time;
+};
+
+struct CompressedQuaternion
+{
+    int16_t X, Y, Z, W;
+};
+
+struct CompressedCVector
+{
+    int16_t X, Y, Z;
+};
+
+
+struct IFP_Compressed_KR00
+{
+    CompressedQuaternion Rotation;
+    int16_t              Time;
+};
+
+struct IFP_Compressed_KRT0 : IFP_Compressed_KR00
+{
+    CompressedCVector Translation;
+};
+
+
+enum IFP_FrameType
+{
+    UNKNOWN_FRAME = -1,
+    KR00 = 0,
+    KRT0 = 1,
+    KRTS = 2
 };
 
 struct IFPHeaderV2
@@ -25,7 +131,6 @@ struct IFPHeaderV2
 struct IFP : FileLoader
 {   
     bool isVersion1;
-    IFPHeaderV1 HeaderV1;
     IFPHeaderV2 HeaderV2;
     std::vector <CAnimBlendHierarchy> AnimationHierarchies;
     std::vector <CAnimBlendSequence> AnimationSequences;
