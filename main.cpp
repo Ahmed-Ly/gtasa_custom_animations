@@ -107,9 +107,9 @@ DWORD WINAPI Main_thread(LPVOID lpParam)
     
     printf("calling LoadIFPFile now\n");
 
-    LoadIFPFile("C:\\Users\\danish\\Desktop\\gtaTxdDff\\ped.ifp"); // ANP3
-  // LoadIFPFile ("C:\\Program Files (x86)\\Rockstar Games\\GTA3\\anim\\ped.ifp"); // ANPK
-    
+    LoadIFPFile("C:\\Users\\danish\\Desktop\\gtaTxdDff\\ped.ifp"); // ANP3 GTA SA
+   //LoadIFPFile ("C:\\Program Files (x86)\\Rockstar Games\\GTA3\\anim\\ped.ifp"); // ANPK GTA 3
+   //LoadIFPFile ("C:\\Program Files (x86)\\Rockstar Games\\GTA Vice City\\ped.ifp"); // ANPK GTA VC
 
     ofs << "finished calling LoadIFPFile " << std::endl;
 
