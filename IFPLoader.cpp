@@ -1,3 +1,4 @@
+#define NOMINMAX
 #include "IFPLoader.h"
 #include <algorithm>
 
@@ -28,6 +29,7 @@ size_t GetSizeOfCompressedFrame(IFP_FrameType FrameType);
 void ReadKrtsFramesAsCompressed ( IFP * IFPElement, BYTE * pKeyFrames, int32_t TotalFrames );
 void ReadKrt0FramesAsCompressed ( IFP * IFPElement, BYTE * pKeyFrames, int32_t TotalFrames );
 void ReadKr00FramesAsCompressed ( IFP * IFPElement, BYTE * pKeyFrames, int32_t TotalFrames );
+void ReadKr00FramesAsCompressed ( IFP * IFPElement, BYTE * pKeyFrames, int32_t TotalFrames, int32_t BoneID );
 
 void LoadIFPFile(const char * FilePath)
 {
@@ -110,13 +112,14 @@ void ReadIFPVersion2(IFP * IFPElement, bool anp3)
         pAnimHierarchy->m_nAnimBlockId = 0;
         pAnimHierarchy->field_B = 0;
 
-        char * pNewSequencesMemory = (char *)operator new(12 * IFP_TOTAL_SEQUENCES + 4);//  Allocate memory for sequences ( 12 * seq_count + 4 )
-
-        *(DWORD *)pNewSequencesMemory = IFP_TOTAL_SEQUENCES;
-
-        pAnimHierarchy->m_pSequences = (CAnimBlendSequence *)(pNewSequencesMemory + 4);
+        const unsigned short   TotalSequences = IFP_TOTAL_SEQUENCES + pAnimHierarchy->m_nSeqCount;
+        char           * pNewSequencesMemory  = ( char * ) operator new ( 12 * TotalSequences + 4 ); //  Allocate memory for sequences ( 12 * seq_count + 4 )
         
+        pAnimHierarchy->m_pSequences          = ( CAnimBlendSequence * )( pNewSequencesMemory + 4 );
+ 
         std::map < std::string, CAnimBlendSequence > MapOfSequences;
+        
+        unsigned short TotalUnknownSequences = 0;
 
         bool bFirstSeq = true;
         for (size_t SequenceIndex = 0; SequenceIndex  < pAnimHierarchy->m_nSeqCount; SequenceIndex++)
@@ -128,13 +131,13 @@ void ReadIFPVersion2(IFP * IFPElement, bool anp3)
             std::string BoneName        = convertStringToMapKey (ObjectNode.Name);
             std::string CorrectBoneName;
             
-            bool bSkipSequence = false;
+            bool bUnknownSequence = false;
             if (ObjectNode.BoneID == -1)
             {
                 ObjectNode.BoneID = getBoneIDFromName(BoneName);
                 if (ObjectNode.BoneID == -1)
                 {
-                    bSkipSequence = true;
+                    bUnknownSequence = true;
                 }
 
                 CorrectBoneName = getCorrectBoneNameFromName(BoneName);
@@ -152,7 +155,24 @@ void ReadIFPVersion2(IFP * IFPElement, bool anp3)
             strncpy (ObjectNode.Name, CorrectBoneName.c_str(), CorrectBoneName.size() +1);
 
             CAnimBlendSequence Sequence;
-            if (!bSkipSequence)
+            CAnimBlendSequence * pUnkownSequence = nullptr;
+            if (bUnknownSequence)
+            {
+             
+                size_t UnkownSequenceIndex     = IFP_TOTAL_SEQUENCES + TotalUnknownSequences;
+                pUnkownSequence = (CAnimBlendSequence*)((BYTE*)pAnimHierarchy->m_pSequences + (sizeof(CAnimBlendSequence) * UnkownSequenceIndex));
+                
+                ofs << "Initializing unknown sequence: UnkownSequenceIndex: " << UnkownSequenceIndex << std::endl;
+
+                CAnimBlendSequence_Constructor ( pUnkownSequence );
+
+                OLD_CAnimBlendSequence_SetName ( pUnkownSequence, ObjectNode.Name);
+
+                OLD_CAnimBlendSequence_SetBoneTag ( pUnkownSequence, ObjectNode.BoneID);
+
+                TotalUnknownSequences ++;
+            }
+            else
             { 
                 CAnimBlendSequence_Constructor(&Sequence);
 
@@ -199,22 +219,25 @@ void ReadIFPVersion2(IFP * IFPElement, bool anp3)
             }
             if (!bInvalidType)
             {
-                if (bSkipSequence )
-                {
-                  IFPElement->skipBytes (data_size);
+                if ( bUnknownSequence )
+                { 
+                    OLD_CAnimBlendSequence_SetNumFrames ( pUnkownSequence, ObjectNode.TotalFrames, bIsRoot, bIsCompressed, pKeyFrames );
                 }
                 else
+                {
+                    OLD_CAnimBlendSequence_SetNumFrames ( &Sequence, ObjectNode.TotalFrames, bIsRoot, bIsCompressed, pKeyFrames );
+                }
+
+                IFPElement->readBytes ( Sequence.m_pFrames, data_size );
+
+                if (anp3)
+                {
+                    pKeyFrames += data_size;
+                    Sequence.m_nFlags |= 8u;
+                }
+
+                if ( !bUnknownSequence )
                 { 
-                    OLD_CAnimBlendSequence_SetNumFrames(&Sequence, ObjectNode.TotalFrames, bIsRoot, bIsCompressed, pKeyFrames);
-
-                    IFPElement->readBytes(Sequence.m_pFrames, data_size);
-
-                    if (anp3)
-                    {
-                        pKeyFrames += data_size;
-                        Sequence.m_nFlags |= 8u;
-                    }
-
                     MapOfSequences [ CorrectBoneName ] = Sequence;
                 }
             }
@@ -239,8 +262,10 @@ void ReadIFPVersion2(IFP * IFPElement, bool anp3)
             }
         }
 
+        *(DWORD *)pNewSequencesMemory = IFP_TOTAL_SEQUENCES + TotalUnknownSequences;
+
         // This order is very important. As we need support for all 32 bones, we must change the total sequences count
-        pAnimHierarchy->m_nSeqCount = IFP_TOTAL_SEQUENCES;
+        pAnimHierarchy->m_nSeqCount = IFP_TOTAL_SEQUENCES + TotalUnknownSequences;
 
         ofs << std::endl << std::endl;
 
@@ -309,14 +334,14 @@ void ReadIFPVersion1 ( IFP * IFPElement )
         pAnimHierarchy->m_nAnimBlockId = 0;
         pAnimHierarchy->field_B = 0;
 
-       char * pNewSequencesMemory = (char *)operator new(12 * IFP_TOTAL_SEQUENCES + 4);//  Allocate memory for sequences ( 12 * seq_count + 4 )
-
-        *(DWORD *)pNewSequencesMemory = IFP_TOTAL_SEQUENCES;
-
-        pAnimHierarchy->m_pSequences = (CAnimBlendSequence *)(pNewSequencesMemory + 4);
+        const unsigned short   TotalSequences = IFP_TOTAL_SEQUENCES + pAnimHierarchy->m_nSeqCount;
+        char           * pNewSequencesMemory  = ( char * ) operator new ( 12 * TotalSequences + 4 ); //  Allocate memory for sequences ( 12 * seq_count + 4 )
+        
+        pAnimHierarchy->m_pSequences          = ( CAnimBlendSequence * )( pNewSequencesMemory + 4 );
  
         std::map < std::string, CAnimBlendSequence > MapOfSequences;
-
+        
+        unsigned short TotalUnknownSequences = 0;
         for (size_t SequenceIndex = 0; SequenceIndex < pAnimHierarchy->m_nSeqCount; SequenceIndex++)
         {
             IFP_CPAN Cpan;
@@ -336,6 +361,9 @@ void ReadIFPVersion1 ( IFP * IFPElement )
 
             int32_t BoneID = -1;
             
+
+            ofs << "[REAL] Anim.Name: " << Anim.Name << "   |  BoneID: " << BoneID << "    |   ";
+
             if (Anim.Base.Size == 0x2C)
             {
                 BoneID = Anim.Next;
@@ -346,29 +374,14 @@ void ReadIFPVersion1 ( IFP * IFPElement )
             }
 
             std::string BoneName = convertStringToMapKey(Anim.Name);
-            std::string CorrectBoneName;
-
-            bool bSkipSequence = false;
+    
+            bool bUnknownSequence = false;
+            BoneID = getBoneIDFromName(BoneName);
             if (BoneID == -1)
             {
-                BoneID = getBoneIDFromName(BoneName);
-                if (BoneID == -1)
-                {
-                    bSkipSequence = true;
-                }
-
-                CorrectBoneName = getCorrectBoneNameFromName(BoneName);
+                bUnknownSequence = true;
             }
-            else
-            {
-                CorrectBoneName = getCorrectBoneNameFromID (BoneID);
-                
-                if (CorrectBoneName == "Unknown")
-                {
-                    ofs << "Anim.Name: " << Anim.Name << std::endl;
-                    CorrectBoneName = getCorrectBoneNameFromName(BoneName);
-                }
-            }
+            std::string CorrectBoneName = getCorrectBoneNameFromName(BoneName);
 
             memset(Anim.Name, 0, sizeof(IFP_ANIM::Name));
             strncpy(Anim.Name, CorrectBoneName.c_str(), CorrectBoneName.size() + 1);
@@ -376,7 +389,22 @@ void ReadIFPVersion1 ( IFP * IFPElement )
             ofs << "Anim.Name: " << Anim.Name << "   |  BoneID: " << BoneID; ///<< std::endl;
 
             CAnimBlendSequence Sequence;
-            if (!bSkipSequence)
+        
+            CAnimBlendSequence * pUnkownSequence = nullptr;
+            if (bUnknownSequence)
+            {
+                size_t UnkownSequenceIndex     = IFP_TOTAL_SEQUENCES + TotalUnknownSequences;
+                pUnkownSequence = (CAnimBlendSequence*)((BYTE*)pAnimHierarchy->m_pSequences + (sizeof(CAnimBlendSequence) * UnkownSequenceIndex));
+                
+                CAnimBlendSequence_Constructor ( pUnkownSequence );
+
+                OLD_CAnimBlendSequence_SetName ( pUnkownSequence, Anim.Name );
+
+                OLD_CAnimBlendSequence_SetBoneTag ( pUnkownSequence, BoneID );
+
+                TotalUnknownSequences ++;
+            }
+            else
             {
                 CAnimBlendSequence_Constructor(&Sequence);
 
@@ -393,9 +421,13 @@ void ReadIFPVersion1 ( IFP * IFPElement )
             size_t           CompressedFrameSize = GetSizeOfCompressedFrame ( FrameType );
             BYTE          *  pKeyFrames          = ( BYTE * ) OLD_CMemoryMgr_Malloc ( CompressedFrameSize * Anim.Frames );
 
-            if (!bSkipSequence)
+            bool bIsRoot = FrameType != IFP_FrameType::KR00;
+            if (bUnknownSequence)
             {
-                bool bIsRoot = FrameType != IFP_FrameType::KR00;
+                OLD_CAnimBlendSequence_SetNumFrames ( pUnkownSequence, Anim.Frames, bIsRoot, pAnimHierarchy->m_bRunningCompressed, pKeyFrames );
+            }
+            else
+            {
                 OLD_CAnimBlendSequence_SetNumFrames ( &Sequence, Anim.Frames, bIsRoot, pAnimHierarchy->m_bRunningCompressed, pKeyFrames );
             }
 
@@ -413,10 +445,10 @@ void ReadIFPVersion1 ( IFP * IFPElement )
             else if (FrameType == IFP_FrameType::KR00)
             {
                 ofs << "  |  FrameType: KR00" << std::endl;
-                ReadKr00FramesAsCompressed ( IFPElement, pKeyFrames, Anim.Frames );
+                ReadKr00FramesAsCompressed ( IFPElement, pKeyFrames, Anim.Frames, BoneID );
             }
 
-            if (!bSkipSequence)
+            if (!bUnknownSequence)
             {
                 MapOfSequences [ CorrectBoneName ] = Sequence;
             }
@@ -434,6 +466,8 @@ void ReadIFPVersion1 ( IFP * IFPElement )
             {
                 CAnimBlendSequence * pSequence = (CAnimBlendSequence*)((BYTE*)pAnimHierarchy->m_pSequences + (sizeof(CAnimBlendSequence) * SequenceIndex));
 
+               //ofs << "Sequence: " << BoneName << " | TotalFrames: " << it->second.m_nFrameCount << std::endl; //<< " | pSequence->m_pFrames Address: " << std::hex << it->second.m_pFrames << std::dec << std::endl;
+
                 memcpy (pSequence, &it->second, sizeof(CAnimBlendSequence));
             }
             else
@@ -441,9 +475,11 @@ void ReadIFPVersion1 ( IFP * IFPElement )
                 insertAnimDummySequence ( false, pAnimHierarchy, SequenceIndex );
             }
         }
+    
+        *(DWORD *)pNewSequencesMemory = IFP_TOTAL_SEQUENCES + TotalUnknownSequences;
 
         // This order is very important. As we need support for all 32 bones, we must change the total sequences count
-        pAnimHierarchy->m_nSeqCount = IFP_TOTAL_SEQUENCES;
+        pAnimHierarchy->m_nSeqCount = IFP_TOTAL_SEQUENCES + TotalUnknownSequences;
 
         ofs << std::endl << std::endl;
 
@@ -501,7 +537,7 @@ void ReadKrt0FramesAsCompressed ( IFP * IFPElement, BYTE * pKeyFrames, int32_t T
     }
 }
 
-void ReadKr00FramesAsCompressed ( IFP * IFPElement, BYTE * pKeyFrames, int32_t TotalFrames )
+void ReadKr00FramesAsCompressed ( IFP * IFPElement, BYTE * pKeyFrames, int32_t TotalFrames, int32_t BoneID )
 {
     for (int32_t FrameIndex = 0; FrameIndex < TotalFrames; FrameIndex++)
     {
@@ -897,9 +933,6 @@ int32_t getBoneIDFromName (std::string const& BoneName)
     if (BoneName == "storso") return BoneType::SPINE1;
     if (BoneName == "shead") return BoneType::HEAD;
 
-    //if (BoneName == "supperarml") return BoneType::R_UPPER_ARM;
-    //if (BoneName == "slowerarml") return BoneType::R_FORE_ARM;
-
     if (BoneName == "supperarml") return BoneType::L_UPPER_ARM;
     if (BoneName == "slowerarml") return BoneType::L_FORE_ARM;
     if (BoneName == "supperarmr") return BoneType::R_UPPER_ARM;
@@ -916,7 +949,7 @@ int32_t getBoneIDFromName (std::string const& BoneName)
     if (BoneName == "slowerlegl") return BoneType::L_CALF;
     if (BoneName == "sfootl") return BoneType::L_FOOT;
 
-    ofs << "ERROR: getCorrectBoneNameFromName: correct bone ID could not be found for (BoneName): " << BoneName << std::endl;
+    //ofs << "ERROR: getCorrectBoneNameFromName: correct bone ID could not be found for (BoneName): " << BoneName << std::endl;
 
     return -1;
 }
@@ -924,6 +957,7 @@ int32_t getBoneIDFromName (std::string const& BoneName)
 
 std::string getCorrectBoneNameFromID ( int32_t & BoneID )
 {
+
     if (BoneID == BoneType::NORMAL) return "Normal";
  
     if (BoneID == BoneType::PELVIS) return "Pelvis";
@@ -1063,9 +1097,6 @@ std::string getCorrectBoneNameFromName(std::string const& BoneName)
     if (BoneName == "smid") return "Spine";
     if (BoneName == "storso") return "Spine1";
     if (BoneName == "shead") return "Head";
-
-    //if (BoneName == "supperarml") return "R UpperArm";
-    //if (BoneName == "slowerarml") return "R ForeArm";
 
     if (BoneName == "supperarml") return "L UpperArm";
     if (BoneName == "slowerarml") return "L ForeArm";
