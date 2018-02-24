@@ -98,7 +98,17 @@ void ModifyAnimStaticAssocation ( void * pClump, CAnimBlendStaticAssociation * p
     // 138: KO_shot_stom
     // 143: PHONE_in
     // 235: XPRESSscratch
-    CAnimBlendHierarchy* pCustomAnimBlendHierarchy = &g_IFPs[0].AnimationHierarchies[138]; // 45 in car
+    // 120: idle_stance
+
+    // GTA VC 
+    // 145: KO_shot_stom  NOPE
+    // 151: Phone_in      GOOD
+    // 233: XpressScratch GOOD
+    // 127: IDLE_STANCE   GOOD
+    // 177: run_stopR 
+    //  14: bomber
+    //   1: ARREST_GUN
+    CAnimBlendHierarchy* pCustomAnimBlendHierarchy = &g_IFPs[0].AnimationHierarchies[241]; // 45 in car
 
 
     const char * AnimationName = GetNameFromHash(pCustomAnimBlendHierarchy->m_hashKey);
