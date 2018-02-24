@@ -165,6 +165,8 @@ CAnimBlendAssociation * NEW_AddAnimation
         // Change the hierarchy
         if ( 
                 (OLD_GetUppercaseKey("muscleidle_csaw") ==pGatewayAnimHierarchy->m_hashKey)
+                ||
+                (OLD_GetUppercaseKey("run_stopR") ==pGatewayAnimHierarchy->m_hashKey)
             )
         {
             ofs << "okay, we can play custom anim now!! " << std::endl;
