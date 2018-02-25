@@ -151,4 +151,17 @@ public:
     //virtual ~CAnimBlendAssociation();
 };
 
+
+
+class CAnimBlendClumpData
+{
+public:
+	void *nextAssoc;	// pointer to CAnimBlendAssociation::next
+	void *prevAssoc;
+	int numFrames;
+	// xbox has a 4b field here
+	DWORD *pedPosition;
+	DWORD *frames;
+};
+
 #endif
