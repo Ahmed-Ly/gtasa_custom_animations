@@ -94,8 +94,9 @@ typedef CAnimBlendAssociation * (__cdecl* hAddAnimation)
     DWORD animID
 );
 
-typedef void (WINAPI* hCAnimBlendStaticAssociation_Init)
+typedef void (__thiscall* hCAnimBlendStaticAssociation_Init)
 (
+    CAnimBlendStaticAssociation * pThis,
     void* pClump,
     CAnimBlendHierarchy* pAnimBlendHierarchy
 );
@@ -252,8 +253,10 @@ CAnimBlendAssociation * NEW_AddAnimation
     DWORD animID
 );
 
-void WINAPI NEW_CAnimBlendStaticAssociation_Init
+void __fastcall NEW_CAnimBlendStaticAssociation_Init
 (
+    CAnimBlendStaticAssociation * pThis,
+    void * padding,
     void* pClump, 
     CAnimBlendHierarchy* pAnimBlendHierarchy
 );

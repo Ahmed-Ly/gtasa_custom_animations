@@ -17,32 +17,31 @@ extern hGetUppercaseKey OLD_GetUppercaseKey;
 
 extern std::vector <CAnimBlendStaticAssociation *> g_StaticAssocations;
 
-void WINAPI NEW_CAnimBlendStaticAssociation_Init
+void __fastcall NEW_CAnimBlendStaticAssociation_Init
 (
+    CAnimBlendStaticAssociation * pThis,
+    void * padding,
     void* pClump,
     CAnimBlendHierarchy* pAnimBlendHierarchy
 )
 {
-    CAnimBlendStaticAssociation * pThis;
-
-    __asm mov pThis, ecx;
-
-
+    
+   
     if (g_Clump == nullptr)
     {
         g_Clump = pClump;
         ofs << "NEW_CAnimBlendStaticAssociation_Init: Ok, g_Clump is now set" << std::endl;
     }
+    
 
+    //__asm mov ecx, pThis;
+    OLD_CAnimBlendStaticAssociation_Init ( pThis,  pClump, pAnimBlendHierarchy);
 
-    __asm mov ecx, pThis;
-    OLD_CAnimBlendStaticAssociation_Init(pClump, pAnimBlendHierarchy);
-
-    //ofs << "NEW_CAnimBlendStaticAssociation_Init: " << std::endl << "Animation Name: " << GetNameFromHash(pAnimBlendHierarchy->m_hashKey) << std::endl;
+    ofs << "NEW_CAnimBlendStaticAssociation_Init: " << std::endl << "Animation Name: " << GetNameFromHash(pAnimBlendHierarchy->m_hashKey) << std::endl;
 
     // Here pThis->m_nAnimGroup and pThis->m_nAnimID are -1 for every static assocation
 
-    g_StaticAssocations.push_back(pThis);
+     g_StaticAssocations.push_back(pThis);
 
 }
 
@@ -127,19 +126,11 @@ void ModifyAnimStaticAssocation ( void * pClump, CAnimBlendStaticAssociation * p
     pCustomAnimBlendHierarchy->m_hashKey = pAnimBlendHierarchy1->m_hashKey;
     pCustomAnimBlendHierarchy->m_nAnimBlockId = pAnimBlendHierarchy1->m_nAnimBlockId;
 
-    __asm 
-    {
-        push ecx;
-        mov ecx, pAnimStaticAssocToModify;
-    };
 
-    OLD_CAnimBlendStaticAssociation_Init(pClump, pCustomAnimBlendHierarchy);
+    OLD_CAnimBlendStaticAssociation_Init ( pAnimStaticAssocToModify, pClump, pCustomAnimBlendHierarchy);
     
 
-    __asm pop ecx;
-
-    printf(
-        "pClump: %p\n \n\n", pClump);
+    printf ( "pClump: %p\n \n\n", pClump);
 
 
 
