@@ -37,7 +37,7 @@ void __fastcall NEW_CAnimBlendStaticAssociation_Init
     //__asm mov ecx, pThis;
     OLD_CAnimBlendStaticAssociation_Init ( pThis,  pClump, pAnimBlendHierarchy);
 
-    ofs << "NEW_CAnimBlendStaticAssociation_Init: " << std::endl << "Animation Name: " << GetNameFromHash(pAnimBlendHierarchy->m_hashKey) << std::endl;
+   // ofs << "NEW_CAnimBlendStaticAssociation_Init: " << std::endl << "Animation Name: " << GetNameFromHash(pAnimBlendHierarchy->m_hashKey) << std::endl;
 
     // Here pThis->m_nAnimGroup and pThis->m_nAnimID are -1 for every static assocation
 
