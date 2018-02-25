@@ -7,6 +7,8 @@
 #pragma comment(lib, "rwcore.lib")
 #pragma comment(lib, "rpworld.lib")
 
+extern std::vector <IFP> g_IFPs;
+
 extern std::ofstream ofs;
 extern std::wofstream ofsW;
 
@@ -137,6 +139,80 @@ CAnimBlendAssociation * NEW_CreateAnimAssociation
 }
 
 
+hCAnimBlendAssocGroup_CopyAnimation CAnimBlendAssocGroup_CopyAnimation   = (hCAnimBlendAssocGroup_CopyAnimation)0x004CE130;
+hCAnimBlendAssociation_SyncAnimation CAnimBlendAssociation_SyncAnimation = (hCAnimBlendAssociation_SyncAnimation)0x004CEB40;
+hCAnimBlendAssociation_Start         CAnimBlendAssociation_Start         = (hCAnimBlendAssociation_Start)0x004CEB70;
+
+
+
+CAnimBlendAssociation *__cdecl OriginalAddAnimation(int pClump, int GroupID, int AnimID)
+{
+   ofs << "OriginalAddAnimation called" << std::endl;
+
+
+
+ CAnimBlendAssociation * pAnimAssoc; // esi
+  int *clumpData; // edi
+  int *next; // eax
+  DWORD *tempAssoc; // eax
+  int *nextAssoc; // ecx
+                                                // We need to remove this line and add some code here for running animations simultaneously
+  pAnimAssoc = CAnimBlendAssocGroup_CopyAnimation((DWORD *) (*(DWORD*)0x00B4EA34) + 5 * GroupID, AnimID);
+
+  ofs << "Done calling  CAnimBlendAssocGroup_CopyAnimation " << std::endl;
+
+  clumpData = *(int **)(   (*(DWORD*)0xB5F878) + pClump);
+
+  if ( !((*((BYTE *)pAnimAssoc + 46) >> 5) & 1) )
+    goto LABEL_5;
+  next = (int *)*clumpData;
+  if ( !*clumpData )
+    goto LABEL_5;
+  while ( !((*((BYTE *)next + 42) >> 5) & 1) )
+  {
+    next = (int *)*next;
+    if ( !next )
+      goto LABEL_5;
+  }
+  if ( next )
+  {
+    CAnimBlendAssociation_SyncAnimation(pAnimAssoc, (CAnimBlendAssociation *)(next - 1));
+    *((BYTE *)pAnimAssoc + 46) |= 1u;
+  }
+  else
+  {
+LABEL_5:
+    CAnimBlendAssociation_Start(pAnimAssoc, 0);
+  }
+
+  tempAssoc = ((DWORD*)pAnimAssoc) + 1;
+
+  if ( *clumpData )                             // clumpData->nextAssoc
+    *(DWORD *)(*clumpData + 4) = (DWORD)tempAssoc;
+
+  nextAssoc = (int *)*clumpData;
+
+  DWORD * dwpAnimAssoc = (DWORD*) pAnimAssoc;
+
+  dwpAnimAssoc[2] = (DWORD)clumpData;
+  //pAnimAssoc[2] = clumpData;
+
+  *tempAssoc = (DWORD)nextAssoc;
+
+  *clumpData = (int)tempAssoc;                  // clumpData->nextAssoc = (int)tempAssoc
+
+  ofs << "Exiting OriginalAddAnimation " << std::endl;
+
+  return pAnimAssoc;
+
+}
+
+
+
+
+
+
+
 CAnimBlendAssociation * NEW_AddAnimation
 (
     void * pClump,
@@ -164,9 +240,9 @@ CAnimBlendAssociation * NEW_AddAnimation
     {
         // Change the hierarchy
         if ( 
-                (OLD_GetUppercaseKey("muscleidle_csaw") ==pGatewayAnimHierarchy->m_hashKey)
+                (OLD_GetUppercaseKey("muscleidle_csaw") == pGatewayAnimHierarchy->m_hashKey)
                 ||
-                (OLD_GetUppercaseKey("run_stopR") ==pGatewayAnimHierarchy->m_hashKey)
+                (OLD_GetUppercaseKey("run_stopR") == pGatewayAnimHierarchy->m_hashKey)
             )
         {
             ofs << "okay, we can play custom anim now!! " << std::endl;
@@ -177,10 +253,22 @@ CAnimBlendAssociation * NEW_AddAnimation
 
                 ofs << "Calling ModifyAnimStaticAssocation now" << std::endl;
 
-                ModifyAnimStaticAssocation(pClump, pAnimStaticAssocToModify);
-            }
+                //ModifyAnimStaticAssocation(pClump, pAnimStaticAssocToModify);
 
-            pAnimAssoc = OLD_AddAnimation(pClump, animGroup, animID);
+                CAnimBlendHierarchy* pAnimBlendHierarchy1       = pAnimStaticAssocToModify->m_pAnimBlendHier;
+                CAnimBlendHierarchy* pCustomAnimBlendHierarchy = &g_IFPs[0].AnimationHierarchies[241];
+
+                pCustomAnimBlendHierarchy->m_hashKey      = pAnimBlendHierarchy1->m_hashKey;
+                pCustomAnimBlendHierarchy->m_nAnimBlockId = pAnimBlendHierarchy1->m_nAnimBlockId;
+
+                pAnimAssoc = OLD_AddAnimation_hier (pClump, pCustomAnimBlendHierarchy, animGroup );
+                
+                printf ("pAnimStaticAssocToModify->m_pAnimBlendHier: %p\n", pAnimStaticAssocToModify->m_pAnimBlendHier);
+            }
+            else
+            { 
+                pAnimAssoc = OLD_AddAnimation(pClump, animGroup, animID);
+            }
         }
         else
         {

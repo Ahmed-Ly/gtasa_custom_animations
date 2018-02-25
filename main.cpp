@@ -53,6 +53,11 @@ hAddAnimation_hier OLD_AddAnimation_hier = (hAddAnimation_hier)0x4d4330;
 
 hLoadPedAnimIFPFile OLD_LoadPedAnimIFPFile = (hLoadPedAnimIFPFile)0x004D5620;
 
+
+
+CAnimBlendAssociation *__cdecl OriginalAddAnimation(int pClump, int GroupID, int AnimID);
+
+
 void HookFunctions()
 {
     DetourRestoreAfterWith();
@@ -68,7 +73,9 @@ void HookFunctions()
     //DetourAttach ( &(PVOID&) OLD_CreateAssociations        , NEW_CreateAssociations );
     
     //DetourAttach(&(PVOID&)OLD_CreateAnimAssociation, NEW_CreateAnimAssociation);
-    DetourAttach(&(PVOID&)OLD_AddAnimation, NEW_AddAnimation);
+   // DetourAttach(&(PVOID&)OLD_AddAnimation, NEW_AddAnimation);
+
+    DetourAttach(&(PVOID&)OLD_AddAnimation, OriginalAddAnimation);
     
     DetourAttach(&(PVOID&)OLD_CAnimBlendStaticAssociation_Init, NEW_CAnimBlendStaticAssociation_Init); 
     DetourAttach(&(PVOID&)OLD_GetUppercaseKey, NEW_GetUppercaseKey);

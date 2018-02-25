@@ -109,6 +109,7 @@ typedef signed int (__thiscall* hCAnimBlendAssociation_Init_reference)
 
 typedef int(__thiscall* hCAnimBlendAssociation_Init)
 (
+    CAnimBlendAssociation * pThis,
     void* pClump, 
     CAnimBlendHierarchy* pAnimBlendHier
 );
@@ -206,6 +207,27 @@ typedef BOOL(__cdecl *  hRwStreamClose)
 
 typedef int(__cdecl *  hGetFirstAssocGroup)
 (char *a1);
+
+
+typedef CAnimBlendAssociation *(__thiscall *  hCAnimBlendAssocGroup_CopyAnimation)
+(
+DWORD * pThis, 
+int AnimID
+);
+
+typedef int(__thiscall *  hCAnimBlendAssociation_SyncAnimation)
+(
+CAnimBlendAssociation* pThis, 
+CAnimBlendAssociation* a2
+);
+
+typedef int(__thiscall *  hCAnimBlendAssociation_Start)
+(
+CAnimBlendAssociation* pThis,
+float a2
+);
+
+
 
 
 
