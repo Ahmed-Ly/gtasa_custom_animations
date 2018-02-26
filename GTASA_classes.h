@@ -66,7 +66,10 @@ public:
 class CAnimBlendHierarchy;
 
 class CAnimBlendStaticAssociation {
+protected:
+    void *vtable;
 public:
+
     unsigned short m_nNumBlendNodes;      
     short m_nAnimID;                      
     short m_nAnimGroup;                   
@@ -77,9 +80,9 @@ public:
                                           
 
     void AllocateSequenceArray(int size);
-    CAnimBlendStaticAssociation();
+    //CAnimBlendStaticAssociation();
     void Init(void* pClump, CAnimBlendHierarchy* pAnimBlendHier);
-    virtual ~CAnimBlendStaticAssociation() = 0;
+    //virtual ~CAnimBlendStaticAssociation() = 0;
 };
 
 
