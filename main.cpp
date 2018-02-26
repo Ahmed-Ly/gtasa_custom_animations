@@ -20,7 +20,6 @@ std::map<DWORD, std::string> g_mapOfAnimHierarchyHashes;
 void * g_Clump = nullptr;
 bool g_PlayCustomAnimations = false;
 
-std::vector <CAnimBlendStaticAssociation *> g_StaticAssocations;
 
 CAnimBlendStaticAssociation * pAnimStaticAssoc1 = nullptr;
 CAnimBlendStaticAssociation * pAnimStaticAssoc2 = nullptr;
@@ -42,7 +41,8 @@ hCreateAnimAssociation OLD_CreateAnimAssociation = (hCreateAnimAssociation)0x4d3
 hAddAnimation OLD_AddAnimation = (hAddAnimation)0x4d3aa0;  
 hGetAnimGroupName OLD_GetAnimGroupName = (hGetAnimGroupName)0x4d3a20;
 
-hCAnimBlendStaticAssociation_Init OLD_CAnimBlendStaticAssociation_Init = (hCAnimBlendStaticAssociation_Init)0x004CEC20;
+hCAnimBlendStaticAssociation_Constructor OLD_CAnimBlendStaticAssociation_Constructor = *(hCAnimBlendStaticAssociation_Constructor)0x4CE940;
+hCAnimBlendStaticAssociation_Init        OLD_CAnimBlendStaticAssociation_Init = (hCAnimBlendStaticAssociation_Init)0x004CEC20;
 hCAnimBlendAssociation_Init_reference OLD_CAnimBlendAssociation_Init_reference = (hCAnimBlendAssociation_Init_reference)0x4CEEC0;
 hCAnimBlendAssociation_Init OLD_CAnimBlendAssociation_Init = (hCAnimBlendAssociation_Init)0x4CED50;
 hCAnimBlendHierarchy_SetName OLD_CAnimBlendHierarchy_SetName = (hCAnimBlendHierarchy_SetName)0x4CF2D0;
@@ -73,11 +73,10 @@ void HookFunctions()
     //DetourAttach ( &(PVOID&) OLD_CreateAssociations        , NEW_CreateAssociations );
     
     //DetourAttach(&(PVOID&)OLD_CreateAnimAssociation, NEW_CreateAnimAssociation);
-   // DetourAttach(&(PVOID&)OLD_AddAnimation, NEW_AddAnimation);
+     DetourAttach(&(PVOID&)OLD_AddAnimation, NEW_AddAnimation);
 
-    DetourAttach(&(PVOID&)OLD_AddAnimation, OriginalAddAnimation);
+    //DetourAttach(&(PVOID&)OLD_AddAnimation, OriginalAddAnimation);
     
-    DetourAttach(&(PVOID&)OLD_CAnimBlendStaticAssociation_Init, NEW_CAnimBlendStaticAssociation_Init); 
     DetourAttach(&(PVOID&)OLD_GetUppercaseKey, NEW_GetUppercaseKey);
     
     //DetourAttach(&(PVOID&)OLD_LoadAnimFile_stream, NEW_LoadAnimFile_stream);
