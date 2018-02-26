@@ -1,4 +1,4 @@
-#include <Windows.h>
+                                                                                                                                                                                                                                                                                                                                                                                                     #include <Windows.h>
 #include <fstream>
 #include "rwcore.h"
 #include "rpworld.h"
@@ -41,6 +41,9 @@ extern hCAnimBlendAssociation_Init OLD_CAnimBlendAssociation_Init;
 
 extern hLoadAnimFile_stream OLD_LoadAnimFile_stream;
 extern hAddAnimation_hier OLD_AddAnimation_hier;
+
+extern hCAnimBlendStaticAssociation_Constructor OLD_CAnimBlendStaticAssociation_Constructor;
+extern hCAnimBlendStaticAssociation_Init OLD_CAnimBlendStaticAssociation_Init;
 
 
 char * __cdecl NEW_AddAnimAssocDefinition 
@@ -142,12 +145,12 @@ CAnimBlendAssociation * NEW_CreateAnimAssociation
 hCAnimBlendAssocGroup_CopyAnimation CAnimBlendAssocGroup_CopyAnimation   = (hCAnimBlendAssocGroup_CopyAnimation)0x004CE130;
 hCAnimBlendAssociation_SyncAnimation CAnimBlendAssociation_SyncAnimation = (hCAnimBlendAssociation_SyncAnimation)0x004CEB40;
 hCAnimBlendAssociation_Start         CAnimBlendAssociation_Start         = (hCAnimBlendAssociation_Start)0x004CEB70;
-
-
+hUncompressAnimation                 UncompressAnimation                 = (hUncompressAnimation)0x4d41c0;
+hCAnimBlendAssociation_Constructor_staticAssocRef OLD_CAnimBlendAssociation_Constructor_staticAssocRef = (hCAnimBlendAssociation_Constructor_staticAssocRef)0x4CF080;
 
 CAnimBlendAssociation *__cdecl OriginalAddAnimation(int pClump, int GroupID, int AnimID)
 {
-   ofs << "OriginalAddAnimation called" << std::endl;
+   //ofs << "OriginalAddAnimation called" << std::endl;
 
 
 
@@ -159,7 +162,7 @@ CAnimBlendAssociation *__cdecl OriginalAddAnimation(int pClump, int GroupID, int
                                                 // We need to remove this line and add some code here for running animations simultaneously
   pAnimAssoc = CAnimBlendAssocGroup_CopyAnimation((DWORD *) (*(DWORD*)0x00B4EA34) + 5 * GroupID, AnimID);
 
-  ofs << "Done calling  CAnimBlendAssocGroup_CopyAnimation " << std::endl;
+  //ofs << "Done calling  CAnimBlendAssocGroup_CopyAnimation " << std::endl;
 
   clumpData = *(int **)(   (*(DWORD*)0xB5F878) + pClump);
 
@@ -201,7 +204,7 @@ LABEL_5:
 
   *clumpData = (int)tempAssoc;                  // clumpData->nextAssoc = (int)tempAssoc
 
-  ofs << "Exiting OriginalAddAnimation " << std::endl;
+  //ofs << "Exiting OriginalAddAnimation " << std::endl;
 
   return pAnimAssoc;
 
@@ -210,6 +213,73 @@ LABEL_5:
 
 
 
+
+CAnimBlendAssociation *__cdecl CustomAddAnimation(int pClump, CAnimBlendStaticAssociation & CustomAnimStaticAssoc)
+{
+   //ofs << "OriginalAddAnimation called" << std::endl;
+
+
+
+ CAnimBlendAssociation * pAnimAssoc; // esi
+  int *clumpData; // edi
+  int *next; // eax
+  DWORD *tempAssoc; // eax
+  int *nextAssoc; // ecx
+
+  // We need to remove this line and add some code here for running animations simultaneously
+  //pAnimAssoc = CAnimBlendAssocGroup_CopyAnimation((DWORD *) (*(DWORD*)0x00B4EA34) + 5 * GroupID, AnimID);
+
+    UncompressAnimation ( CustomAnimStaticAssoc.m_pAnimBlendHier );
+    pAnimAssoc = (CAnimBlendAssociation *)malloc(sizeof(CAnimBlendAssociation));
+    OLD_CAnimBlendAssociation_Constructor_staticAssocRef ( pAnimAssoc, CustomAnimStaticAssoc);
+
+  //ofs << "Done calling  CAnimBlendAssocGroup_CopyAnimation " << std::endl;
+
+  clumpData = *(int **)(   (*(DWORD*)0xB5F878) + pClump);
+
+  if ( !((*((BYTE *)pAnimAssoc + 46) >> 5) & 1) )
+    goto LABEL_5;
+  next = (int *)*clumpData;
+  if ( !*clumpData )
+    goto LABEL_5;
+  while ( !((*((BYTE *)next + 42) >> 5) & 1) )
+  {
+    next = (int *)*next;
+    if ( !next )
+      goto LABEL_5;
+  }
+  if ( next )
+  {
+    CAnimBlendAssociation_SyncAnimation(pAnimAssoc, (CAnimBlendAssociation *)(next - 1));
+    *((BYTE *)pAnimAssoc + 46) |= 1u;
+  }
+  else
+  {
+LABEL_5:
+    CAnimBlendAssociation_Start(pAnimAssoc, 0);
+  }
+
+  tempAssoc = ((DWORD*)pAnimAssoc) + 1;
+
+  if ( *clumpData )                             // clumpData->nextAssoc
+    *(DWORD *)(*clumpData + 4) = (DWORD)tempAssoc;
+
+  nextAssoc = (int *)*clumpData;
+
+  DWORD * dwpAnimAssoc = (DWORD*) pAnimAssoc;
+
+  dwpAnimAssoc[2] = (DWORD)clumpData;
+  //pAnimAssoc[2] = clumpData;
+
+  *tempAssoc = (DWORD)nextAssoc;
+
+  *clumpData = (int)tempAssoc;                  // clumpData->nextAssoc = (int)tempAssoc
+
+  //ofs << "Exiting OriginalAddAnimation " << std::endl;
+
+  return pAnimAssoc;
+
+}
 
 
 
@@ -238,46 +308,51 @@ CAnimBlendAssociation * NEW_AddAnimation
 
     if (pGatewayAnimHierarchy != nullptr)
     {
-        // Change the hierarchy
-        if ( 
+        if (
                 (OLD_GetUppercaseKey("muscleidle_csaw") == pGatewayAnimHierarchy->m_hashKey)
                 ||
                 (OLD_GetUppercaseKey("run_stopR") == pGatewayAnimHierarchy->m_hashKey)
             )
         {
-            ofs << "okay, we can play custom anim now!! " << std::endl;
 
             if (g_PlayCustomAnimations)
             {
+                ofs << "About to play custom Animation now " << std::endl;
+
                 CAnimBlendStaticAssociation * pAnimStaticAssocToModify = GetAnimStaticAssocBy_GroupId_AnimId(animGroup, animID);
 
-                ofs << "Calling ModifyAnimStaticAssocation now" << std::endl;
-
-                //ModifyAnimStaticAssocation(pClump, pAnimStaticAssocToModify);
-
                 CAnimBlendHierarchy* pAnimBlendHierarchy1       = pAnimStaticAssocToModify->m_pAnimBlendHier;
+                
                 CAnimBlendHierarchy* pCustomAnimBlendHierarchy = &g_IFPs[0].AnimationHierarchies[241];
-
                 pCustomAnimBlendHierarchy->m_hashKey      = pAnimBlendHierarchy1->m_hashKey;
                 pCustomAnimBlendHierarchy->m_nAnimBlockId = pAnimBlendHierarchy1->m_nAnimBlockId;
-
-                pAnimAssoc = OLD_AddAnimation_hier (pClump, pCustomAnimBlendHierarchy, animGroup );
+               
                 
-                printf ("pAnimStaticAssocToModify->m_pAnimBlendHier: %p\n", pAnimStaticAssocToModify->m_pAnimBlendHier);
+                CAnimBlendStaticAssociation CustomAnimStaticAssoc;
+                OLD_CAnimBlendStaticAssociation_Constructor ( &CustomAnimStaticAssoc );
+
+                CustomAnimStaticAssoc.m_nFlags = pAnimStaticAssocToModify->m_nFlags;
+
+                OLD_CAnimBlendStaticAssociation_Init ( &CustomAnimStaticAssoc, pClump, pCustomAnimBlendHierarchy);
+
+                CustomAnimStaticAssoc.m_nAnimGroup = pAnimStaticAssocToModify->m_nAnimGroup;
+                CustomAnimStaticAssoc.m_nAnimID    = pAnimStaticAssocToModify->m_nAnimID;
+
+                pAnimAssoc = CustomAddAnimation ( (int)pClump, CustomAnimStaticAssoc );
             }
             else
             { 
                 pAnimAssoc = OLD_AddAnimation(pClump, animGroup, animID);
-            }
+            } 
         }
         else
         {
             pAnimAssoc = OLD_AddAnimation(pClump, animGroup, animID);
-        }
+        } 
     }
     else
     {
-        ofs << "ERROR: pGatewayAnimHierarchy is nullptr. Calling OLD_AddAnimation instead of OLD_AddAnimation_hier" << std::endl;
+        ofs << "ERROR: pGatewayAnimHierarchy is nullptr. Calling OLD_AddAnimation " << std::endl;
 
         pAnimAssoc = OLD_AddAnimation(pClump, animGroup, animID);
     }
@@ -322,53 +397,6 @@ int __cdecl NEW_LoadAnimFile_stream
     
     result = OLD_LoadAnimFile_stream(pStream, b1, sz1);
 
-/*
-    static bool isRunStopAnimReplaced = false;
-
-    if (!isRunStopAnimReplaced && isAnimationHierarchyLoaded("run_stopR"))
-    {
-    
-        ofs << "Yes, animation is loaded." << std::endl;
-
-        CAnimBlock * pPedAnimBlock = OLD_GetAnimationBlock("ped");
-
-        ofs << "pPedAnimBlock->m_name: " << pPedAnimBlock->m_name << std::endl;
-
-
-
-        //CAnimBlock * pMuscularAnimBlock = OLD_GetAnimationBlock("muscular");
-        //CAnimBlendHierarchy * pAnimRunStopHierarchy = OLD_GetAnimation("muscleidle_csaw", pMuscularAnimBlock);
-
-        const char * AnimationToReplaceWithName = "run_wuzi";
-        CAnimBlendHierarchy * pAnimSeatDownHierarchy = OLD_GetAnimation(AnimationToReplaceWithName, pPedAnimBlock);
-        
-        const char * AnimationName = GetNameFromHash(pAnimSeatDownHierarchy->m_hashKey);
-        if (AnimationName != nullptr)
-        {
-            ofs << "AnimationName: " << AnimationName << std::endl;
-        }
-        else
-        {
-            ofs << "GetNameFromHash: could not get animation name" << std::endl;
-        }
-
-
-        CAnimBlendHierarchy * pAnimRunStopHierarchy = OLD_GetAnimation("run_stopR", pPedAnimBlock);
-
-        pAnimRunStopHierarchy->m_pSequences          = pAnimSeatDownHierarchy->m_pSequences;
-        pAnimRunStopHierarchy->m_nSeqCount           = pAnimSeatDownHierarchy->m_nSeqCount;
-        pAnimRunStopHierarchy->m_bRunningCompressed  = pAnimSeatDownHierarchy->m_bRunningCompressed;
-        pAnimRunStopHierarchy->field_B               = pAnimSeatDownHierarchy->field_B;
-        pAnimRunStopHierarchy->m_fTotalTime          = pAnimSeatDownHierarchy->m_fTotalTime;
-        //pAnimRunStopHierarchy->field_14                = pAnimSeatDownHierarchy->field_14;
-
-
-        isRunStopAnimReplaced = true;
-    } 
-    
-
-    ofs << std::endl; 
-*/
     return result;
 }
 
@@ -381,3 +409,4 @@ int GetNumAnimBlocks (void)
 {
     return *(int *)(VAR_CAnimManager_NumAnimBlocks);
 }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
