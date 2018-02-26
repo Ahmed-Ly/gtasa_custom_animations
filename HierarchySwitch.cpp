@@ -11,39 +11,11 @@ extern DWORD g_CurrentHierarchyAnimationHash;
 extern char * AnimationToReplaceWithName;
 extern std::map<DWORD, std::string> g_mapOfAnimHierarchyHashes;
 extern void * g_Clump;
+extern hCAnimBlendStaticAssociation_Constructor OLD_CAnimBlendStaticAssociation_Constructor;
 extern hCAnimBlendStaticAssociation_Init OLD_CAnimBlendStaticAssociation_Init;
 extern hCAnimBlendHierarchy_SetName OLD_CAnimBlendHierarchy_SetName;
 extern hGetUppercaseKey OLD_GetUppercaseKey;
 
-extern std::vector <CAnimBlendStaticAssociation *> g_StaticAssocations;
-
-void __fastcall NEW_CAnimBlendStaticAssociation_Init
-(
-    CAnimBlendStaticAssociation * pThis,
-    void * padding,
-    void* pClump,
-    CAnimBlendHierarchy* pAnimBlendHierarchy
-)
-{
-    
-   
-    if (g_Clump == nullptr)
-    {
-        g_Clump = pClump;
-        ofs << "NEW_CAnimBlendStaticAssociation_Init: Ok, g_Clump is now set" << std::endl;
-    }
-    
-
-    //__asm mov ecx, pThis;
-    OLD_CAnimBlendStaticAssociation_Init ( pThis,  pClump, pAnimBlendHierarchy);
-
-   // ofs << "NEW_CAnimBlendStaticAssociation_Init: " << std::endl << "Animation Name: " << GetNameFromHash(pAnimBlendHierarchy->m_hashKey) << std::endl;
-
-    // Here pThis->m_nAnimGroup and pThis->m_nAnimID are -1 for every static assocation
-
-     g_StaticAssocations.push_back(pThis);
-
-}
 
 
 const char * GetNameFromHash ( DWORD Hash )
@@ -126,7 +98,6 @@ void ModifyAnimStaticAssocation ( void * pClump, CAnimBlendStaticAssociation * p
     pCustomAnimBlendHierarchy->m_hashKey = pAnimBlendHierarchy1->m_hashKey;
     pCustomAnimBlendHierarchy->m_nAnimBlockId = pAnimBlendHierarchy1->m_nAnimBlockId;
 
-
     OLD_CAnimBlendStaticAssociation_Init ( pAnimStaticAssocToModify, pClump, pCustomAnimBlendHierarchy);
     
 
@@ -197,28 +168,19 @@ bool isAnimationHierarchyLoaded(const char * AnimationName)
 
 CAnimBlendHierarchy * GetAnimHierachyBy_GroupId_AnimId(DWORD GroupID, DWORD AnimID)
 {
-    for (size_t i = 0; i < g_StaticAssocations.size(); i++)
-    {
-        CAnimBlendStaticAssociation * pThis = g_StaticAssocations[i];
 
-        if ((pThis->m_nAnimGroup == GroupID) && (pThis->m_nAnimID == AnimID))
-        {
-            return pThis->m_pAnimBlendHier;
-        }
-    }
-    return nullptr;
+    DWORD * pAssocGroup = (DWORD *) (*(DWORD*)0x00B4EA34) + 5 * GroupID;
+
+    CAnimBlendStaticAssociation * pStaticAssoc = (CAnimBlendStaticAssociation *)( pAssocGroup[1] + 20 * (AnimID - pAssocGroup[3]) );
+
+    return pStaticAssoc->m_pAnimBlendHier; 
 }
 
 CAnimBlendStaticAssociation * GetAnimStaticAssocBy_GroupId_AnimId(DWORD GroupID, DWORD AnimID)
 {
-    for (size_t i = 0; i < g_StaticAssocations.size(); i++)
-    {
-        CAnimBlendStaticAssociation * pThis = g_StaticAssocations[i];
+    DWORD * pAssocGroup = (DWORD *) (*(DWORD*)0x00B4EA34) + 5 * GroupID;
 
-        if ((pThis->m_nAnimGroup == GroupID) && (pThis->m_nAnimID == AnimID))
-        {
-            return pThis;
-        }
-    }
-    return nullptr;
+    CAnimBlendStaticAssociation * pStaticAssoc = (CAnimBlendStaticAssociation *)( pAssocGroup[1] + 20 * (AnimID - pAssocGroup[3]) );
+
+    return pStaticAssoc;
 }
