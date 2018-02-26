@@ -94,6 +94,10 @@ typedef CAnimBlendAssociation * (__cdecl* hAddAnimation)
     DWORD animID
 );
 
+
+typedef CAnimBlendStaticAssociation * (__thiscall* hCAnimBlendStaticAssociation_Constructor) 
+( CAnimBlendStaticAssociation * pThis );
+
 typedef void (__thiscall* hCAnimBlendStaticAssociation_Init)
 (
     CAnimBlendStaticAssociation * pThis,
@@ -228,7 +232,24 @@ float a2
 );
 
 
+typedef CAnimBlendAssociation * (__thiscall *  hCAnimBlendAssociation_Constructor)
+( 
+CAnimBlendAssociation * pThis, 
+void * pClump, 
+CAnimBlendHierarchy * pAnimBlendHierarchy 
+);
 
+
+typedef void (__cdecl *  hUncompressAnimation)
+(
+CAnimBlendHierarchy * pAnimBlendHierarchy 
+);
+
+typedef CAnimBlendAssociation * (__thiscall *  hCAnimBlendAssociation_Constructor_staticAssocRef)
+(
+CAnimBlendAssociation * pThis,
+CAnimBlendStaticAssociation& StaticAssociationByReference
+);
 
 
 char * __cdecl NEW_AddAnimAssocDefinition
@@ -305,6 +326,13 @@ int NEW_LoadPedAnimIFPFile
 (
     void
 );
+
+
+void __cdecl NEW_UncompressAnimation
+(
+CAnimBlendHierarchy * pAnimBlendHierarchy 
+);
+
 
 const char * GetNameFromHash(DWORD Hash);
 int GetNumAnimations(void);
