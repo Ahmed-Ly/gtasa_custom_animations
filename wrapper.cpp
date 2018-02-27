@@ -1,11 +1,7 @@
                                                                                                                                                                                                                                                                                                                                                                                                      #include <Windows.h>
 #include <fstream>
-#include "rwcore.h"
-#include "rpworld.h"
 #include "wrapper.h"
 #include "IFPLoader.h"
-#pragma comment(lib, "rwcore.lib")
-#pragma comment(lib, "rpworld.lib")
 
 extern std::vector <IFP> g_IFPs;
 
