@@ -18,7 +18,7 @@ extern std::wofstream ofsW;
 std::map<DWORD, std::string> g_mapOfAnimHierarchyHashes;
 
 void * g_Clump = nullptr;
-bool g_PlayCustomAnimations = false;
+bool g_bAllowToPlayCustomAnimation = false;
 
 
 CAnimBlendStaticAssociation * pAnimStaticAssoc1 = nullptr;
@@ -38,7 +38,8 @@ hRpAnimBlendClumpGetAssociationAnimId OLD_RpAnimBlendClumpGetAssociationAnimId =
 
 hGetAnimAssociationAnimId OLD_GetAnimAssociationAnimId = (hGetAnimAssociationAnimId) 0x4d3a60;
 hCreateAnimAssociation OLD_CreateAnimAssociation = (hCreateAnimAssociation)0x4d3a40;
-hAddAnimation OLD_AddAnimation = (hAddAnimation)0x4d3aa0;  
+hAddAnimation OLD_AddAnimation = (hAddAnimation)0x4d3aa0; 
+hAddAnimationAndSync OLD_AddAnimationAndSync = (hAddAnimationAndSync)0x004D3B30;
 hGetAnimGroupName OLD_GetAnimGroupName = (hGetAnimGroupName)0x4d3a20;
 
 hCAnimBlendStaticAssociation_Constructor OLD_CAnimBlendStaticAssociation_Constructor = *(hCAnimBlendStaticAssociation_Constructor)0x4CE940;
@@ -56,7 +57,7 @@ hLoadPedAnimIFPFile OLD_LoadPedAnimIFPFile = (hLoadPedAnimIFPFile)0x004D5620;
 
 
 CAnimBlendAssociation *__cdecl OriginalAddAnimation(int pClump, int GroupID, int AnimID);
-
+CAnimBlendAssociation * __cdecl OriginalAddAnimationAndSync(int pClump, CAnimBlendAssociation * pAnimAssocToSyncWith, int GroupID, int AnimID);
 
 void HookFunctions()
 {
@@ -69,18 +70,18 @@ void HookFunctions()
 
 
     //DetourAttach ( &(PVOID&) OLD_CreateAssociations_Clump, NEW_CreateAssociations_Clump );
-
     //DetourAttach ( &(PVOID&) OLD_CreateAssociations        , NEW_CreateAssociations );
-    
     //DetourAttach(&(PVOID&)OLD_CreateAnimAssociation, NEW_CreateAnimAssociation);
-     DetourAttach(&(PVOID&)OLD_AddAnimation, NEW_AddAnimation);
+
+    DetourAttach(&(PVOID&)OLD_AddAnimation, NEW_AddAnimation);
+    DetourAttach(&(PVOID&)OLD_AddAnimationAndSync, NEW_AddAnimationAndSync);
 
     //DetourAttach(&(PVOID&)OLD_AddAnimation, OriginalAddAnimation);
-    
+    //DetourAttach(&(PVOID&)OLD_AddAnimationAndSync, OriginalAddAnimationAndSync);
+   
     DetourAttach(&(PVOID&)OLD_GetUppercaseKey, NEW_GetUppercaseKey);
     
     //DetourAttach(&(PVOID&)OLD_LoadAnimFile_stream, NEW_LoadAnimFile_stream);
-
     //DetourAttach(&(PVOID&)OLD_LoadPedAnimIFPFile, NEW_LoadPedAnimIFPFile);
     
 
@@ -159,7 +160,7 @@ DWORD WINAPI Main_thread(LPVOID lpParam)
                 OnePressTMR = clock();
                 ofs << std::endl << "Pressed Key '5'" << std::endl << std::endl;
 
-               g_PlayCustomAnimations = true;
+               g_bAllowToPlayCustomAnimation = true;
          
             }
         }
