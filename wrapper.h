@@ -5,10 +5,6 @@
 #include <string>
 #include <iterator>
 
-VOID SHOW_DWORD_HEX_MsgBox(DWORD output);
-VOID SHOW_OUTPUT_BOXW(LPCWSTR output);
-VOID SHOW_OUTPUT_BOX(LPCSTR output);
-
 // Animations = CAnimBlendHierarchy
 #define ARRAY_CAnimManager_AnimBlocks                       0xb5d4a0
 #define ARRAY_CAnimManager_Animations                       0xB4EA40
@@ -357,4 +353,3 @@ void printAnimBlocks(void);
 bool isAnimationHierarchyLoaded(const char * AnimationName);
 CAnimBlendHierarchy * GetAnimHierachyBy_GroupId_AnimId (DWORD GroupID, DWORD AnimID);
 CAnimBlendStaticAssociation * GetAnimStaticAssocBy_GroupId_AnimId(DWORD GroupID, DWORD AnimID);
-void ModifyAnimStaticAssocation(void * pClump, CAnimBlendStaticAssociation * pAnimStaticAssocToModify);
