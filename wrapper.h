@@ -94,6 +94,14 @@ typedef CAnimBlendAssociation * (__cdecl* hAddAnimation)
     DWORD animID
 );
 
+typedef CAnimBlendAssociation * (__cdecl* hAddAnimationAndSync)
+(
+    void * pClump,
+    CAnimBlendAssociation * pAnimAssociation,
+    DWORD animGroup,
+    DWORD animID
+);
+
 
 typedef CAnimBlendStaticAssociation * (__thiscall* hCAnimBlendStaticAssociation_Constructor) 
 ( CAnimBlendStaticAssociation * pThis );
@@ -292,6 +300,14 @@ CAnimBlendAssociation * NEW_CreateAnimAssociation
 CAnimBlendAssociation * NEW_AddAnimation
 (
     void * pClump,
+    DWORD animGroup,
+    DWORD animID
+);
+
+CAnimBlendAssociation * NEW_AddAnimationAndSync
+(
+    void * pClump,
+    CAnimBlendAssociation * pAnimAssociation,
     DWORD animGroup,
     DWORD animID
 );
