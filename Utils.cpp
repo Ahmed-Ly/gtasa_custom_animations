@@ -28,21 +28,6 @@ const char * GetNameFromHash ( DWORD Hash )
     return nullptr;
 }
 
-/*
-unsigned int WINAPI NEW_CAnimBlendHierarchy_SetName ( char * string )
-{
-    CAnimBlendHierarchy* pThis;
-    __asm mov pThis, ecx;
-
-    g_mapOfAnimHierarchyHashes[pThis->m_hashKey] = std::string(string);
-
-    ofs << "NEW_CAnimBlendHierarchy_SetName: " << GetNameFromHash(pThis->m_hashKey) << std::endl;
-
-    __asm mov ecx, pThis;
-    return OLD_CAnimBlendHierarchy_SetName ( string );
-}
-*/
-
 
 unsigned int __cdecl NEW_GetUppercaseKey
 (
