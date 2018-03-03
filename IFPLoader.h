@@ -52,6 +52,10 @@ struct IFP_ANIM
     int32_t  Unk;
     int32_t  Next;
     int32_t  Previous;
+
+    // According to https://www.gtamodding.com/wiki/IFP, Unk2 should not exist, but for some reason, it's there
+    // I don't know why. Let's just go with the flow and ignore it. The value "seems" to be always zero. 
+    int32_t  Unk2;
 };
 
 struct IFP_KFRM
